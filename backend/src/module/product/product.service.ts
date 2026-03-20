@@ -3,7 +3,7 @@
 // import { inject, injectable } from 'inversify'
 // import ProductSPURepository from './product._spu.repository'
 // import Redis from 'ioredis'
-// import { BadRequest } from '~/helper/response/errorResponse'
+// import { BadRequestError } from '~/helper/response/errorResponse'
 // import { ProductAttribute } from '~/types/type'
 
 // @injectable()
@@ -59,7 +59,7 @@
 //     const codes = new Set()
 //     for (const sku of skus) {
 //       if (codes.has(sku.skuCode)) {
-//         throw new BadRequest('Duplicate SKU generated')
+//         throw new BadRequestError('Duplicate SKU generated')
 //       }
 //       codes.add(sku.skuCode)
 //     }

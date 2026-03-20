@@ -1,6 +1,6 @@
 import multer from 'multer'
 import path from 'path'
-import { BadRequest } from '~/helper/response/errorResponse'
+import { BadRequestError } from '~/helper/response/errorResponse'
 
 const LITMIT_COMMON_FILE_SIZE = 1024 * 1024 * 10 // 10MB
 const ALLOW_FILE_TYPE = ['image/png', 'image/jpg', 'image/jpeg', 'image/avif']
@@ -11,7 +11,7 @@ export const upload = multer({
   limits: { fileSize: LITMIT_COMMON_FILE_SIZE },
   fileFilter: (req, file, cb) => {
     if (!ALLOW_FILE_TYPE.includes(file.mimetype)) {
-      const error = new BadRequest('File type is not supported')
+      const error = new BadRequestError('File type is not supported')
       return cb(error)
     }
 
@@ -35,7 +35,7 @@ export const uploadFileCSV = multer({
   limits: { fileSize: LITMIT_COMMON_FILE_SIZE },
   fileFilter: (req, file, cb) => {
     if (!ALLOW_FILE_CSV.includes(file.mimetype)) {
-      const error = new BadRequest('Only CSV files allowed')
+      const error = new BadRequestError('Only CSV files allowed')
       return cb(error)
     }
 

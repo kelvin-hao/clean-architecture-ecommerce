@@ -5,7 +5,7 @@ import { validate, ValidationError } from 'class-validator'
 import { Request, Response, NextFunction } from 'express'
 import sanitizeHtml from 'sanitize-html'
 import { BaseDto } from '~/helper'
-import { BadRequest } from '~/helper/response/errorResponse'
+import { BadRequestError } from '~/helper/response/errorResponse'
 import { RequestPartEnum } from '~/types/type'
 
 /**
@@ -80,7 +80,7 @@ function validationInput<T extends BaseDto>(dtoClass: ClassConstructor<T>, sourc
     if (errors.length > 0) {
       const formattedErrors = formatErrors(errors)
       // Pass the structured error object, not a stringified version.
-      return next(new BadRequest(formattedErrors))
+      return next(new BadRequestError(formattedErrors))
     }
     // Stage 4: Replace the original request part with the sanitized and validated DTO.
     // This provides a type-safe and clean object to your controllers.

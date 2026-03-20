@@ -3,7 +3,7 @@ import UserRepository from './user.repository'
 import { inject, injectable } from 'inversify'
 import Redis from 'ioredis'
 import { ContainerInjectionRegistry } from '~/helper/injection/injectionManager'
-import { BadRequest } from '~/helper/response/errorResponse'
+import { BadRequestError } from '~/helper/response/errorResponse'
 import { ChangePasswordDTO, EditProfileDTO, GetUsersQueryDTO, ImportUseFromCSVDTO, ResponseUserDTO } from './user.dto'
 import { FIVE_MINUTES_IN_SECONDS } from '~/utils/const.util'
 import bcrypt from 'bcryptjs'
@@ -26,7 +26,7 @@ class UserService {
 
   async enable2FA(userId: string) {
     const user = await this.userRepository.findById(userId)
-    if (!user) throw new BadRequest('Can not enable 2FA')
+    if (!user) throw new BadRequestError('Can not enable 2FA')
 
     const secret = generateSecret()
     const issuer = 'E-commerce'
@@ -56,7 +56,7 @@ class UserService {
       }
 
     const user = await this.userRepository.findById(userId)
-    if (!user) throw new BadRequest('Can not get profile')
+    if (!user) throw new BadRequestError('Can not get profile')
 
     const userWithRole = (await user.populate('roles')) as IUserWithRoles
 
@@ -73,15 +73,15 @@ class UserService {
 
   async changePassword(userId: string, payload: ChangePasswordDTO) {
     const user = await this.userRepository.findByIdAndSelectPassword(userId)
-    if (!user) throw new BadRequest('Can not change password')
+    if (!user) throw new BadRequestError('Can not change password')
 
     const isMatchPassword = bcrypt.compareSync(payload.oldPassword, user.password)
-    if (!isMatchPassword) throw new BadRequest('Passowrd is not match')
+    if (!isMatchPassword) throw new BadRequestError('Passowrd is not match')
 
     const hashPassword = bcrypt.hashSync(payload.password)
     const result = await this.userRepository.update(userId, { password: hashPassword })
 
-    if (!result) throw new BadRequest('Change password was failed')
+    if (!result) throw new BadRequestError('Change password was failed')
 
     return {
       id: user._id
@@ -90,10 +90,10 @@ class UserService {
 
   async deleteAccount(userId: string) {
     const user = await this.userRepository.findById(userId)
-    if (!user) throw new BadRequest('Can not remove account')
+    if (!user) throw new BadRequestError('Can not remove account')
 
     const result = await this.userRepository.update(userId, { is_delete: true })
-    if (!result) throw new BadRequest('Remove user failled')
+    if (!result) throw new BadRequestError('Remove user failled')
 
     return {
       id: user._id
@@ -102,13 +102,13 @@ class UserService {
 
   async editProfile(userId: string, payload: EditProfileDTO) {
     const user = await this.userRepository.findById(userId)
-    if (!user) throw new BadRequest('Can not edit profile')
+    if (!user) throw new BadRequestError('Can not edit profile')
 
     const userKey = `user:${userId}`
     await this.redisClient.del(userKey)
 
     const result = await this.userRepository.update(userId, { ...payload, avatar: { url: payload.avatar } })
-    if (!result) throw new BadRequest('Edit profile failed')
+    if (!result) throw new BadRequestError('Edit profile failed')
 
     const safeUser = plainToInstance(ResponseUserDTO, result, {
       excludeExtraneousValues: true
@@ -130,7 +130,7 @@ class UserService {
 
     const userRole = await this.roleRepository.findOne({ name: 'User' })
     if (!userRole) {
-      throw new BadRequest('Role User not found')
+      throw new BadRequestError('Role User not found')
     }
     const role = (await userRole.populate('permissions')) as IRoleWithPermissions
     const permissions = role.permissions.map((p) => p.key)

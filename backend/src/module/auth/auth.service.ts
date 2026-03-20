@@ -2,7 +2,7 @@ import UserRepository from '../user/user.repository'
 import { IUser } from '../user/user.model'
 import { inject, injectable } from 'inversify'
 import {
-  BadRequest,
+  BadRequestError,
   ConflictError,
   NotFoundError,
   TooManyRequest,
@@ -116,7 +116,7 @@ class AuthService {
     const verificationKey = `verification-token:${verificationToken}`
     const userDataJSON = await this.redisClient.get(verificationKey)
 
-    if (!userDataJSON) throw new BadRequest('Verification token is expired or wrong ')
+    if (!userDataJSON) throw new BadRequestError('Verification token is expired or wrong ')
 
     await this.redisClient.del(verificationKey)
 
@@ -127,7 +127,7 @@ class AuthService {
     const userRole = await this.roleRepository.findOne({
       name: 'User'
     })
-    if (!userRole) throw new BadRequest('Something went wrong. Please try again')
+    if (!userRole) throw new BadRequestError('Something went wrong. Please try again')
 
     const userRoleWithPermission = (await userRole?.populate('permissions')) as IRoleWithPermissions
     const permissions = new Set<string>()
@@ -160,7 +160,7 @@ class AuthService {
   async loginWithGoogleCallback({ code }: GoogleLoginDTO) {
     const { tokens } = await this.googleClient.getToken(code)
 
-    if (!tokens.id_token) throw new BadRequest('No id_tokens present google')
+    if (!tokens.id_token) throw new BadRequestError('No id_tokens present google')
 
     const ticket = await this.googleClient.verifyIdToken({
       idToken: tokens.id_token,
@@ -200,7 +200,7 @@ class AuthService {
     if (!user) throw new NotFoundError('User does not exist. Please sign up')
 
     const isMatchPassword = bcrypt.compareSync(payload.password, user.password)
-    if (!isMatchPassword) throw new BadRequest('Email or password is not matching')
+    if (!isMatchPassword) throw new BadRequestError('Email or password is not matching')
 
     const userData = JSON.stringify({
       id: user._id
@@ -310,7 +310,7 @@ class AuthService {
     const userId = await this.redisClient.get(resetKey)
 
     if (!userId) {
-      throw new BadRequest('Token is invalid or has expired.')
+      throw new BadRequestError('Token is invalid or has expired.')
     }
 
     await this.redisClient.del(resetKey)
@@ -332,16 +332,16 @@ class AuthService {
   async verifyToken2FA({ token }: VerifyToken2FADTO, userId: string) {
     const twoFAKey = `2fa:${userId}`
     const secret = await this.redisClient.get(twoFAKey)
-    if (!secret) throw new BadRequest('2FA expired')
+    if (!secret) throw new BadRequestError('2FA expired')
 
     const isValid = await verify({ secret, token })
-    if (!isValid) throw new BadRequest('Invalid OPT 2FA')
+    if (!isValid) throw new BadRequestError('Invalid OPT 2FA')
 
     const result = await this.userRepository.update(userId, {
       two_FA: true,
       two_FA_secret: secret
     })
-    if (result) throw new BadRequest('Something went wrong. Try again please')
+    if (result) throw new BadRequestError('Something went wrong. Try again please')
 
     await this.redisClient.del(twoFAKey)
 

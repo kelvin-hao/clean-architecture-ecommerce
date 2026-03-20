@@ -2,7 +2,7 @@ import { ContainerInjectionRegistry } from '~/helper/injection/injectionManager'
 import CategoryRepository from './caterogy.repository'
 import { inject, injectable } from 'inversify'
 import { CategoryResponseDTO, CreateCategoryDTO, UpdateCategoryDTO } from './category.dto'
-import { BadRequest } from '~/helper/response/errorResponse'
+import { BadRequestError } from '~/helper/response/errorResponse'
 import { convertToObjectId, slugify } from '~/utils'
 import { Types } from 'mongoose'
 import { plainToInstance } from 'class-transformer'
@@ -23,20 +23,20 @@ class CategoryService {
 
     const existedSlug = await this.categoryRepository.findBySlug(finalSlug)
 
-    if (existedSlug) throw new BadRequest('Name or slug already exist')
+    if (existedSlug) throw new BadRequestError('Name or slug already exist')
 
     let paths: Types.ObjectId[] = []
     let level = 0
 
     if (parentId) {
       const parent = await this.categoryRepository.findById(parentId)
-      if (!parent) throw new BadRequest('Parent category not found')
+      if (!parent) throw new BadRequestError('Parent category not found')
 
       paths = [...parent.path, parent._id]
       level = parent.level + 1
     }
 
-    if (level > MAX_LEVEL_CATEGORY) throw new BadRequest('Too deep')
+    if (level > MAX_LEVEL_CATEGORY) throw new BadRequestError('Too deep')
 
     const data = await this.categoryRepository.create({
       name,
@@ -69,14 +69,14 @@ class CategoryService {
 
   async updateCategory(categoryID: string, payload: UpdateCategoryDTO) {
     const category = await this.categoryRepository.findById(categoryID)
-    if (!category) throw new BadRequest('Category not found')
+    if (!category) throw new BadRequestError('Category not found')
 
     let newPath = category.path
     let newLevel = category.level
 
     if (payload.parent && payload.parent !== category.parent?.toString()) {
       const newParent = await this.categoryRepository.findById(payload.parent)
-      if (!newParent) throw new BadRequest('Parent category not found')
+      if (!newParent) throw new BadRequestError('Parent category not found')
 
       newPath = [...newParent.path, newParent._id]
       newLevel = newParent.level + 1
@@ -92,13 +92,13 @@ class CategoryService {
         await this.categoryRepository.update(categoryID, data)
       ])
 
-      if (!res?._id) throw new BadRequest('Something went wrong')
+      if (!res?._id) throw new BadRequestError('Something went wrong')
     }
 
     const res = await this.categoryRepository.update(categoryID, {
       name: payload.name
     })
-    if (!res?._id) throw new BadRequest('Something went wrong')
+    if (!res?._id) throw new BadRequestError('Something went wrong')
 
     return {
       id: res._id
@@ -109,7 +109,7 @@ class CategoryService {
     const childrens = await this.categoryRepository.findChildren(categoryID)
 
     if (childrens && childrens.length > 0) {
-      throw new BadRequest('Cannot delete category with children')
+      throw new BadRequestError('Cannot delete category with children')
     }
 
     // soft delete here

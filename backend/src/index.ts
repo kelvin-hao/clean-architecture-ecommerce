@@ -2,33 +2,21 @@ import express from 'express'
 import 'reflect-metadata'
 import env from './config/env/dotenv.config'
 import exitAppHook from 'async-exit-hook'
-import expressApp from './app'
-import { initializeDatabase } from './database'
+import expressApp, { initialExpressApp } from './app'
 import databaseManager from './database/dbManager'
-import { configureContainer } from './helper/injection/injectionConfig'
-import { containerInjection } from './helper/injection/injectionManager'
 import logRoutesFromConfig from './utils/logEndpoints'
 import routeConfig from './config/route.config'
-import configCloudinary from './config/cloudinary.config'
-import { initializeScheduler } from './helper/cron'
-import { initializeBackgroundJob } from './helper/jobs'
 
 const bootstrapServer = async () => {
-  await initializeDatabase()
-
-  configCloudinary()
-
-  initializeScheduler()
-  await initializeBackgroundJob()
-
-  const container = configureContainer()
-  containerInjection.setContainer(container)
-
+  // something need to run befor server
+  await initialExpressApp()
+  // run  server
   const app = express()
-
   await expressApp(app)
 
+  // Show route config in terminal
   logRoutesFromConfig(routeConfig)
+  // Gracefully shutting down
   exitAppHook(async (callback) => {
     console.log('\nGracefully shutting down...')
     await databaseManager.closeAllConnections()

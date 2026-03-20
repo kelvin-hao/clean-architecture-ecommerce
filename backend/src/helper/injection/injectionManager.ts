@@ -1,5 +1,5 @@
 import { Container } from 'inversify'
-import { BadRequest } from '../response/errorResponse'
+import { BadRequestError } from '../response/errorResponse'
 
 export const ContainerInjectionRegistry = {
   RedisDB: Symbol.for('RedisDB'),
@@ -76,7 +76,7 @@ class ContainerInjection {
 
   public getContainer(): Container {
     if (!this.container) {
-      throw new BadRequest(
+      throw new BadRequestError(
         'ContainerInjection has not been initialized. Please call setContainer() in your main bootstrap file.'
       )
     }

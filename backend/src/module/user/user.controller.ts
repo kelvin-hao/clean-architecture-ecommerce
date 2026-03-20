@@ -4,7 +4,7 @@ import { OKResponse } from '~/helper/response/successResponse'
 import { ContainerInjectionRegistry } from '~/helper/injection/injectionManager'
 import { ChangePasswordDTO, EditProfileDTO, GetUsersQueryDTO } from './user.dto'
 import UserService from './user.service'
-import { BadRequest } from '~/helper/response/errorResponse'
+import { BadRequestError } from '~/helper/response/errorResponse'
 import { CsvDownloadResponse } from '~/helper/response'
 
 @injectable()
@@ -13,7 +13,7 @@ class UserController {
 
   async importUserFromCSV(req: Request, res: Response) {
     const file = req.file
-    if (!file) throw new BadRequest('CSV file is required')
+    if (!file) throw new BadRequestError('CSV file is required')
     const data = await this.userService.importUsersFromCSV(file.path)
 
     return new OKResponse(data).send(req, res)

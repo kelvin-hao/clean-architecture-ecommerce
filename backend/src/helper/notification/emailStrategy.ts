@@ -1,7 +1,7 @@
 import { INotificationStrategy } from '~/types/interface'
 import { createTransport, Transporter } from 'nodemailer'
 import env from '~/config/env/dotenv.config'
-import { BadRequest } from '../response/errorResponse'
+import { BadRequestError } from '../response/errorResponse'
 
 class EmailStrategy implements INotificationStrategy {
   private transporter: Transporter
@@ -18,7 +18,7 @@ class EmailStrategy implements INotificationStrategy {
     // Verify the connection configuration on startup
     this.transporter.verify((error, _) => {
       if (error) {
-        throw new BadRequest('Email transporter verification failed')
+        throw new BadRequestError('Email transporter verification failed')
       }
     })
   }
@@ -35,7 +35,7 @@ class EmailStrategy implements INotificationStrategy {
       const info = await this.transporter.sendMail(mailOptions)
       console.log(`✅ Email sent successfully! Message ID: ${info.messageId}`)
     } catch (_) {
-      throw new BadRequest('Failed to send email.')
+      throw new BadRequestError('Failed to send email.')
     }
   }
 }

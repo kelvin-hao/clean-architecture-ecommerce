@@ -4,7 +4,7 @@ import { ContainerInjectionRegistry } from '~/helper/injection/injectionManager'
 import RoleRepository from './role.repository'
 import PermissionRepository from './permission.repository'
 import { CreatePermissionDTO, CreateRoleDTO } from './rbac.dto'
-import { BadRequest } from '~/helper/response/errorResponse'
+import { BadRequestError } from '~/helper/response/errorResponse'
 import { Types } from 'mongoose'
 import { ONE_MINUTES_IN_SECONDS } from '~/utils/const.util'
 
@@ -34,7 +34,7 @@ class RBACService {
     const { key, resource, action } = payload
 
     const existedPermission = await this.permissionRepository.findByKey(key)
-    if (existedPermission) throw new BadRequest('Permission already exist')
+    if (existedPermission) throw new BadRequestError('Permission already exist')
 
     const permission = await this.permissionRepository.create({
       key,
@@ -82,7 +82,7 @@ class RBACService {
     const { name, description, permissions } = payload
 
     const existedNameRole = await this.roleRepository.findByName(name)
-    if (existedNameRole) throw new BadRequest('Role already existed')
+    if (existedNameRole) throw new BadRequestError('Role already existed')
 
     const permissionDocs = await this.permissionRepository.findAll({
       key: { $in: permissions }
