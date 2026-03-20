@@ -10,11 +10,45 @@ import cors from 'cors'
 import { corsOptions } from './config/cors.config'
 import env from './config/env/dotenv.config'
 import compression from 'compression'
-
-const MORGAN_FORMAT = 'dev'
+import { MORGAN_FORMAT } from './utils/const.util'
+import { initializeDatabase } from './database'
+import configCloudinary from './config/cloudinary.config'
+import { initializeScheduler } from './helper/cron'
+import { initializeBackgroundJob } from './helper/jobs'
+import swaggerUi from 'swagger-ui-express'
+import swaggerJsdoc from 'swagger-jsdoc'
+import { configureContainer } from './helper/injection/injectionConfig'
+import { containerInjection } from './helper/injection/injectionManager'
 
 const expressApp = async (app: Express) => {
   const router = await createRoute()
+  const options: swaggerJsdoc.Options = {
+    definition: {
+      openapi: '3.0.0',
+      info: {
+        title: 'E-Commerce API',
+        version: '1.0.0',
+        description: 'API documentation'
+      },
+      servers: [
+        {
+          url: 'http://localhost:8080/api/v1'
+        }
+      ],
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: 'http',
+            scheme: 'bearer',
+            bearerFormat: 'JWT'
+          }
+        }
+      },
+      security: [{ bearerAuth: [] }]
+    },
+    apis: ['./docs/*.yaml']
+  }
+  const swaggerSpec = swaggerJsdoc(options)
 
   app.use(helmet())
 
@@ -42,9 +76,23 @@ const expressApp = async (app: Express) => {
 
   app.use(env.API_PREFIX, router)
 
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
+
   app.use(notFound)
 
   app.use(errorHandler)
+}
+
+export const initialExpressApp = async () => {
+  await initializeDatabase()
+
+  const container = configureContainer()
+  containerInjection.setContainer(container)
+
+  configCloudinary()
+  initializeScheduler()
+
+  await initializeBackgroundJob()
 }
 
 export default expressApp

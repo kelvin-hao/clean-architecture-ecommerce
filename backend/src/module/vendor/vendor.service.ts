@@ -4,7 +4,7 @@ import VendorRepository from './vendor.repository'
 import Redis from 'ioredis'
 import { RegisterVendorDto, RejectVendorDto } from './vendor.dto'
 import { VendorApplicationStatusEnum } from '~/types/type'
-import { BadRequest, NotFoundError } from '~/helper/response/errorResponse'
+import { BadRequestError, NotFoundError } from '~/helper/response/errorResponse'
 import { slugify, convertToObjectId } from '~/utils'
 
 @injectable()
@@ -20,7 +20,7 @@ class VendorService {
       status_application: VendorApplicationStatusEnum.PENDING
     })
 
-    if (existedVendor) throw new BadRequest('vendor already registered')
+    if (existedVendor) throw new BadRequestError('vendor already registered')
 
     const vendor = await this.vendorRepository.create({
       user_id: convertToObjectId(userId),
@@ -50,7 +50,7 @@ class VendorService {
     if (!vendor) throw new NotFoundError('Vendor not found')
 
     if (vendor.status_application !== VendorApplicationStatusEnum.PENDING) {
-      throw new BadRequest('Only pending vendor can be rejected')
+      throw new BadRequestError('Only pending vendor can be rejected')
     }
 
     return this.vendorRepository.update(vendorId, {
@@ -66,7 +66,7 @@ class VendorService {
     if (!vendor) throw new NotFoundError('Vendor not found')
 
     if (vendor.status_application !== VendorApplicationStatusEnum.PENDING) {
-      throw new BadRequest('Only pending vendor can be approved')
+      throw new BadRequestError('Only pending vendor can be approved')
     }
 
     return this.vendorRepository.update(vendorId, {

@@ -2,7 +2,7 @@ import { ErrorResponseBase } from '.'
 import { StatusCodes } from './statusCode'
 import { StatusReasons } from './statusReason'
 
-export class BadRequest extends ErrorResponseBase {
+export class BadRequestError extends ErrorResponseBase {
   constructor(message: unknown = StatusReasons.BAD_REQUEST, status = StatusCodes.BAD_REQUEST) {
     super(message as string, status)
   }

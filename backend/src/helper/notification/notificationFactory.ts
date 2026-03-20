@@ -1,4 +1,4 @@
-import { BadRequest } from '../response/errorResponse'
+import { BadRequestError } from '../response/errorResponse'
 import EmailNotification from './emailNotification'
 import NotficationTemplate from './notificationTemplate'
 import { SMSNotification } from './smsNotification'
@@ -23,7 +23,7 @@ export class NotificationFactory {
         return new SMSNotification()
 
       default:
-        throw new BadRequest(`Invalid notifier type specified: ${type}`)
+        throw new BadRequestError(`Invalid notifier type specified: ${type}`)
     }
   }
 }

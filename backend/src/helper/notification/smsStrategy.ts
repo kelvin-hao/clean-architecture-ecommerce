@@ -1,14 +1,14 @@
 import { env } from 'process'
 import { Twilio } from 'twilio'
 import { INotificationStrategy } from '~/types/interface'
-import { BadRequest } from '../response/errorResponse'
+import { BadRequestError } from '../response/errorResponse'
 
 class SMSStrategy implements INotificationStrategy {
   private twilioClient: Twilio
 
   constructor() {
     if (!env.TWILIO_ACCOUNT_SID || !env.TWILIO_AUTH_TOKEN || !env.TWILIO_PHONE_NUMBER) {
-      throw new BadRequest('Twilio environment variables are not fully configured.')
+      throw new BadRequestError('Twilio environment variables are not fully configured.')
     }
 
     this.twilioClient = new Twilio(env.TWILIO_ACCOUNT_SID, env.TWILIO_AUTH_TOKEN)
@@ -25,7 +25,7 @@ class SMSStrategy implements INotificationStrategy {
       console.log(`SMS sent successfully! SID: ${message.sid}`)
     } catch (error) {
       console.error(`Failed to send SMS to ${recipient}:`, error)
-      throw new BadRequest('Failed to send SMS.')
+      throw new BadRequestError('Failed to send SMS.')
     }
   }
 }

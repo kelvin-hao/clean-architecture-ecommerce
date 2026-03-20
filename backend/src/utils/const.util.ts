@@ -1,6 +1,8 @@
 export const ACCESS_TOKEN_EXPRIRE_IN = '15m'
 export const REFRESH_TOKEN_EXPRIRE_IN = '7d'
 
+export const MORGAN_FORMAT = 'dev'
+
 export const CONTEXT = {
   ERROR: 'ERROR RESPONSE',
   SUSSESS: 'SUCCESS RESPONSE',
@@ -23,9 +25,13 @@ export const MAX_LEVEL_CATEGORY = 5
 export const BYTE_UNIT = 1024
 
 export const SEVEN_DAYS_IN_SECONDS = 7 * 24 * 60 * 60
+
 export const ONE_DAYS_IN_SECONDS = 24 * 60 * 60
+
 export const FIVE_MINUTES_IN_SECONDS = 5 * 60
+
 export const FIFTEN_MINUTES_IN_SECONDS = 15 * 60
+
 export const ONE_MINUTES_IN_SECONDS = 60
 
 export const DEFAULT_AVATAR =

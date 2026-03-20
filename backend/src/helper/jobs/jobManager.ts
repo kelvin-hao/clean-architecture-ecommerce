@@ -1,5 +1,5 @@
 import { IJob } from '.'
-import { BadRequest } from '../response/errorResponse'
+import { BadRequestError } from '../response/errorResponse'
 
 export enum JobType {
   SEND_EMAIL = 'SEND_EMAIL'
@@ -18,7 +18,7 @@ export class JobManager {
     const job = this.jobs.get(type)
 
     if (!job) {
-      throw new BadRequest(`Job ${type} not registered`)
+      throw new BadRequestError(`Job ${type} not registered`)
     }
 
     return job
