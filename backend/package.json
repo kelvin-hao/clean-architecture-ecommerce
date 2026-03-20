@@ -24,6 +24,8 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@commitlint/cli": "^20.5.0",
+    "@commitlint/config-conventional": "^20.5.0",
     "@eslint/js": "^9.38.0",
     "@types/async-exit-hook": "^2.0.2",
     "@types/bcryptjs": "^2.4.6",
