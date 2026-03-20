@@ -22,6 +22,7 @@ import { containerInjection } from './helper/injection/injectionManager'
 
 const expressApp = async (app: Express) => {
   const router = await createRoute()
+
   const options: swaggerJsdoc.Options = {
     definition: {
       openapi: '3.0.0',
