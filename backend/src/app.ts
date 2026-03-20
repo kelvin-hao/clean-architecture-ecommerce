@@ -21,6 +21,7 @@ import { configureContainer } from './helper/injection/injectionConfig'
 import { containerInjection } from './helper/injection/injectionManager'
 
 const expressApp = async (app: Express) => {
+  const a = 10
   const router = await createRoute()
   const options: swaggerJsdoc.Options = {
     definition: {
