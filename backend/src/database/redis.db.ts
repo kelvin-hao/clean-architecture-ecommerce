@@ -4,6 +4,7 @@ import { InternalServerError } from '~/helper/response/errorResponse'
 import { IConnectionStrategy } from '~/types/interface'
 
 const STATUS_REDIS = {
+  CONNECT: 'connect',
   END: 'end',
   RECONNECT: 'reconnecting',
   ERROR: 'error'
@@ -25,12 +26,9 @@ export class RedisConnection implements IConnectionStrategy<Redis> {
     try {
       await this.client.ping()
 
-      console.log('Redis connection status: connected')
-
       return this.client
     } catch (err: unknown) {
       console.error('Failed to connect to Redis:', err)
-
       throw new InternalServerError('Failed to connect to the Redis database')
     }
   }
@@ -38,13 +36,15 @@ export class RedisConnection implements IConnectionStrategy<Redis> {
   async disconnect(): Promise<void> {
     if (this.client) {
       await this.client.quit()
-
-      console.log('Redis client disconnected')
     }
   }
 
   private setupEventHandler(): void {
     if (!this.client) return
+
+    this.client.on(STATUS_REDIS.CONNECT, () => {
+      console.log('Redis connection status: connected')
+    })
 
     this.client.on(STATUS_REDIS.END, () => {
       console.log('Redis connection status: ended')

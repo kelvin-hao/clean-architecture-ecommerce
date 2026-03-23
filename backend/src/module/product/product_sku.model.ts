@@ -1,23 +1,23 @@
-import mongoose, { Document, Schema, Types } from 'mongoose'
+import mongoose, { Document, HydratedDocument, Schema, Types } from 'mongoose'
+import { VariationValue } from '~/types/type'
 import { DATABASE_DOCUMENT } from '~/utils/const.util'
 
 const PRODUCT_SKU_COLLECTION = 'productSkus'
 
 export interface IProductSKU extends Document {
   _id: Types.ObjectId
-  product?: Types.ObjectId
+  spu: Types.ObjectId
   sku_code: string
-  price: number
+  price?: number
   compare_at_price?: number
-  stock: number
-  reserved_stock: number
-  attributes: Record<string, string>
-  is_active: boolean
+  variationValues: VariationValue[]
+  is_active?: boolean
 }
 
+export type ProductSKUDocument = HydratedDocument<IProductSKU>
 const productSKUSchema = new Schema<IProductSKU>(
   {
-    product: {
+    spu: {
       type: Schema.Types.ObjectId,
       ref: DATABASE_DOCUMENT.PRODUCT_SPU,
       index: true,
@@ -31,16 +31,14 @@ const productSKUSchema = new Schema<IProductSKU>(
     },
 
     price: { type: Number, required: true },
-    compare_at_price: Number,
+    compare_at_price: { type: Number, default: null },
 
-    stock: { type: Number, default: 0 },
-    reserved_stock: { type: Number, default: 0 },
-
-    attributes: {
-      type: Map,
-      of: String,
-      required: true
-    },
+    variationValues: [
+      {
+        name: String,
+        value: String
+      }
+    ],
 
     is_active: {
       type: Boolean,

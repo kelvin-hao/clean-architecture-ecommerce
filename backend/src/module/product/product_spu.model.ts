@@ -1,5 +1,5 @@
 import mongoose, { Document, Schema, Types } from 'mongoose'
-import { ProductAttribute, Image, ProductStatusEnum } from '~/types/type'
+import { ProductAttribute, Image, ProductStatusEnum, VariationOption } from '~/types/type'
 import { DATABASE_DOCUMENT } from '~/utils/const.util'
 
 const PRODUCT_SPU_COLLECTION = 'productSpus'
@@ -14,12 +14,12 @@ export interface IProductSPU extends Document {
   images: Image[]
   vendor: Types.ObjectId
   category: Types.ObjectId
-  sku_ids: Types.ObjectId[]
-  attributes: ProductAttribute[]
+  attributes?: ProductAttribute[]
+  variationOptions: VariationOption[]
   base_price?: number
-  rating_average: number
-  rating_count: number
-  status: ProductStatusEnum
+  rating_average?: number
+  rating_count?: number
+  status?: ProductStatusEnum
 }
 
 const productSPUSchema = new Schema<IProductSPU>(
@@ -50,17 +50,17 @@ const productSPUSchema = new Schema<IProductSPU>(
       }
     ],
 
-    sku_ids: [
+    variationOptions: [
       {
-        type: Schema.Types.ObjectId,
-        ref: DATABASE_DOCUMENT.PRODUCT_SKU
+        name: String,
+        options: [String]
       }
     ],
 
     attributes: [
       {
         name: String,
-        options: [String]
+        value: String
       }
     ],
 

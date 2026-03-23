@@ -165,6 +165,16 @@ const routeConfig = {
         method: 'GET'
       }
     }
+  },
+
+  products: {
+    path: '/products',
+    child: {
+      insert: {
+        path: '/',
+        method: 'POST'
+      }
+    }
   }
 }
 

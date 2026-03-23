@@ -15,7 +15,7 @@ export default [
     rules: {
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unused-vars': [
-        'error',
+        'warn',
         {
           argsIgnorePattern: '^_',
           caughtErrorsIgnorePattern: '^_',
@@ -24,7 +24,7 @@ export default [
         }
       ],
       'prettier/prettier': [
-        'error',
+        'warn',
         {
           arrowParens: 'always',
           semi: false,

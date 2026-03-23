@@ -79,7 +79,7 @@ class UserService {
     if (!isMatchPassword) throw new BadRequestError('Passowrd is not match')
 
     const hashPassword = bcrypt.hashSync(payload.password)
-    const result = await this.userRepository.update(userId, { password: hashPassword })
+    const result = await this.userRepository.update({ _id: userId }, { password: hashPassword })
 
     if (!result) throw new BadRequestError('Change password was failed')
 
@@ -92,7 +92,7 @@ class UserService {
     const user = await this.userRepository.findById(userId)
     if (!user) throw new BadRequestError('Can not remove account')
 
-    const result = await this.userRepository.update(userId, { is_delete: true })
+    const result = await this.userRepository.update({ _id: userId }, { is_delete: true })
     if (!result) throw new BadRequestError('Remove user failled')
 
     return {
@@ -107,7 +107,7 @@ class UserService {
     const userKey = `user:${userId}`
     await this.redisClient.del(userKey)
 
-    const result = await this.userRepository.update(userId, { ...payload, avatar: { url: payload.avatar } })
+    const result = await this.userRepository.update({ _id: userId }, { ...payload, avatar: { url: payload.avatar } })
     if (!result) throw new BadRequestError('Edit profile failed')
 
     const safeUser = plainToInstance(ResponseUserDTO, result, {
@@ -229,12 +229,12 @@ class UserService {
   }
 
   async getUsers(query: GetUsersQueryDTO) {
-    const users = await this.userRepository.paginate({
+    const users = await this.userRepository.findAll({
       page: query.page,
       limit: query.limit
     })
 
-    const formatUser = users.data.map((u) => plainToInstance(ResponseUserDTO, u))
+    const formatUser = users.map((u) => plainToInstance(ResponseUserDTO, u))
 
     return {
       ...users,

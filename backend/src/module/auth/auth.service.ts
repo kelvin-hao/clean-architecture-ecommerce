@@ -321,7 +321,7 @@ class AuthService {
     }
 
     const newHashedPassword = await bcrypt.hash(newPassword, SALT_NUMBER)
-    await this.userRepository.update(user.id, { password: newHashedPassword })
+    await this.userRepository.update({ _id: user.id }, { password: newHashedPassword })
 
     return {
       id: user._id,
@@ -337,10 +337,13 @@ class AuthService {
     const isValid = await verify({ secret, token })
     if (!isValid) throw new BadRequestError('Invalid OPT 2FA')
 
-    const result = await this.userRepository.update(userId, {
-      two_FA: true,
-      two_FA_secret: secret
-    })
+    const result = await this.userRepository.update(
+      { _id: userId },
+      {
+        two_FA: true,
+        two_FA_secret: secret
+      }
+    )
     if (result) throw new BadRequestError('Something went wrong. Try again please')
 
     await this.redisClient.del(twoFAKey)

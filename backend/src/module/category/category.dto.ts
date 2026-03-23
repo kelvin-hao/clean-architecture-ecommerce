@@ -1,6 +1,6 @@
 import { Exclude, Expose, Transform } from 'class-transformer'
 import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator'
-import { BaseDto, BaseExposeDTO } from '~/helper'
+import { BaseDto, BaseExposeDto } from '~/helper'
 import { ATTRIBUTES_TYPE } from '~/types/type'
 
 export class AttributeDTO {
@@ -44,7 +44,7 @@ export class UpdateCategoryDTO extends BaseDto {
 }
 // output dto
 @Exclude()
-export class CategoryResponseDTO extends BaseExposeDTO {
+export class CategoryResponseDTO extends BaseExposeDto {
   @Expose()
   name: string
 

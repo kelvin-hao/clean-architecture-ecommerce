@@ -21,7 +21,17 @@ export type Image = {
 
 export type ProductAttribute = {
   name: string
-  options: string[]
+  value: string
+}
+
+export type VariationOption = {
+  name: string // Color
+  options: [string] // ["Red", "Blue"]
+}
+
+export type VariationValue = {
+  name: string
+  value: string
 }
 
 // enum
