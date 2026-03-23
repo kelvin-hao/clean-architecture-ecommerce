@@ -3,7 +3,7 @@
 import { createLogger, format, transports, Logger as WinstonLogger } from 'winston'
 import 'winston-daily-rotate-file'
 import { formatStackTrace } from '~/utils/formatStack'
-import { hideSensitiveFields } from '~/utils/hideSensitiveFields'
+// import { hideSensitiveFields } from '~/utils/hideSensitiveFields'
 
 /**
  * Optional configuration for the Logger instance.
@@ -46,7 +46,7 @@ class Logger {
     const textFormat = format.printf(({ level, timestamp, context, requestID, stack, ...meta }) => {
       const contextStr = context ? `[${context}]` : ''
       const requestIDStr = requestID ? `[${requestID}]` : ''
-      const metaStr = Object.keys(meta).length ? `\n${JSON.stringify(hideSensitiveFields(meta), null, 2)}` : ''
+      const metaStr = Object.keys(meta).length ? `\n${JSON.stringify}` : ''
       const stackStr = stack ? `\n${JSON.stringify(formatStackTrace(stack as string), null, 2)}` : '' // Format stack trace for readability
 
       return `${timestamp} - ${level} - ${contextStr} - ${requestIDStr} \n${metaStr}

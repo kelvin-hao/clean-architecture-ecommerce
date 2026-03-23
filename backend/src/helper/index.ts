@@ -1,9 +1,12 @@
 import { Exclude, Expose, Transform, Type } from 'class-transformer'
+import { ClientSession, Document, FilterQuery, Model, Query, SaveOptions, UpdateQuery } from 'mongoose'
+import { injectable, unmanaged } from 'inversify'
+import { IsInt, IsOptional, IsString, Min } from 'class-validator'
 
 export class BaseDto {}
 
 @Exclude()
-export class BaseExposeDTO {
+export class BaseExposeDto {
   @Expose()
   @Transform((params) => params.obj._id)
   id: string
@@ -12,12 +15,8 @@ export class BaseExposeDTO {
   createdAt: Date
 }
 
-import { Document, FilterQuery, Model } from 'mongoose'
-import { injectable, unmanaged } from 'inversify'
-import { IsInt, IsMongoId, Min } from 'class-validator'
-
 export interface IRepositoryBase<T> {
-  create(data: Partial<T>): Promise<T>
+  create(data: Partial<T>, options?: SaveOptions & { session?: ClientSession }): Promise<T>
 
   findById(id: string): Promise<T | null>
 
@@ -25,27 +24,9 @@ export interface IRepositoryBase<T> {
 
   findAll(condition?: FilterQuery<T>): Promise<T[]>
 
-  paginate(options: QueryOptions<T>): Promise<PaginatedResult<T>>
+  update(filter: FilterQuery<T>, update: UpdateQuery<T>, session?: ClientSession): Promise<T | null>
 
-  update(id: string, data: Partial<T>): Promise<T | null>
-
-  delete(id: string): Promise<boolean>
-}
-
-export interface QueryOptions<T> {
-  filter?: FilterQuery<T>
-  select?: Record<string, 1 | 0>
-  sort?: Record<string, 1 | -1>
-  page?: number
-  limit?: number
-}
-
-export interface PaginatedResult<T> {
-  data: T[]
-  total: number
-  page: number
-  limit: number
-  totalPages: number
+  delete(filter: FilterQuery<T>, session?: ClientSession): Promise<boolean>
 }
 
 @injectable()
@@ -56,8 +37,11 @@ export abstract class RepositoryBase<T extends Document> implements IRepositoryB
     this.model = model
   }
 
-  async create(data: Partial<T>): Promise<T> {
-    return this.model.create(data)
+  async create(data: Partial<T>, options?: SaveOptions & { session?: ClientSession }): Promise<T> {
+    const doc = new this.model(data)
+    const saved = await doc.save({ session: options?.session })
+
+    return saved.toObject<T>()
   }
 
   async findById(id: string): Promise<T | null> {
@@ -72,54 +56,110 @@ export abstract class RepositoryBase<T extends Document> implements IRepositoryB
     return this.model.find(condition || {}).exec()
   }
 
-  async paginate(options: QueryOptions<T>): Promise<PaginatedResult<T>> {
-    const { filter = {}, select, sort, page = 1, limit = 20 } = options
-
-    const skip = (page - 1) * limit
-
-    const query = this.model.find({ ...filter, deletedAt: null })
-
-    if (select) query.select(select)
-
-    if (sort) query.sort(sort)
-
-    const [data, total] = await Promise.all([
-      query.skip(skip).limit(limit).exec(),
-      this.model.countDocuments({ ...filter, deletedAt: null })
-    ])
-
-    return {
-      data,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit)
-    }
+  async update(filter: FilterQuery<T>, update: UpdateQuery<T>, session?: ClientSession): Promise<T | null> {
+    return this.model
+      .findOneAndUpdate(filter, update, {
+        new: true,
+        session
+      })
+      .lean<T>()
+      .exec()
   }
 
-  async update(id: string, data: Partial<T>): Promise<T | null> {
-    return this.model.findByIdAndUpdate(id, data, { new: true }).exec()
-  }
+  async delete(filter: FilterQuery<T>, session?: ClientSession): Promise<boolean> {
+    const result = await this.model.deleteOne(filter, { session })
 
-  async delete(id: string): Promise<boolean> {
-    const result = await this.model.deleteOne({ _id: id }).exec()
     return result.deletedCount === 1
   }
 }
 
-export class ParamsIDDTO {
-  @IsMongoId()
-  id: string
+export class BaseQueryDto {
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  limit?: number
+
+  @IsOptional()
+  @IsString()
+  sort?: string // "price,-createdAt"
+
+  @IsOptional()
+  @IsString()
+  fields?: string // "name,price"
+
+  @IsOptional()
+  @IsString()
+  keyword?: string
 }
 
-export class QueryPaginationDTO {
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  page: number = 1
+export class APIFeatures<T, Q extends BaseQueryDto> {
+  private query: Query<T[], T>
+  private queryString: Q
 
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  limit: number = 10
+  constructor(query: Query<T[], T>, queryString: Q) {
+    this.query = query
+    this.queryString = queryString
+  }
+
+  // search
+  search(fields: (keyof T)[] = ['name' as keyof T]) {
+    if (this.queryString.keyword) {
+      const keyword = this.queryString.keyword
+
+      this.query = this.query.find({
+        $or: fields.map((field) => ({
+          [field as string]: { $regex: keyword, $options: 'i' }
+        }))
+      })
+    }
+
+    return this
+  }
+
+  // sort
+  sort(defaultSort = '-createdAt') {
+    if (this.queryString.sort) {
+      const sortBy = this.queryString.sort.split(',').join(' ')
+      this.query = this.query.sort(sortBy)
+    } else {
+      this.query = this.query.sort(defaultSort)
+    }
+
+    return this
+  }
+
+  // paginate
+  paginate() {
+    const page = Number(this.queryString?.page) || 1
+    const limit = Number(this.queryString?.limit) || 10
+
+    const skip = (page - 1) * limit
+
+    this.query = this.query.skip(skip).limit(limit)
+
+    return this
+  }
+
+  // select
+  select(defaultFields?: string) {
+    if (this.queryString.fields) {
+      const fields = this.queryString.fields.split(',').join(' ')
+      this.query = this.query.select(fields)
+    } else if (defaultFields) {
+      this.query = this.query.select(defaultFields)
+    }
+
+    return this
+  }
+
+  async exec() {
+    return await this.query
+  }
 }

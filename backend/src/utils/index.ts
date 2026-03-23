@@ -1,5 +1,6 @@
 import mongoose from 'mongoose'
 import { BYTE_UNIT } from './const.util'
+import crypto from 'crypto'
 
 export const replacePlaceholder = (template: string, params: Record<string, string>) => {
   Object.keys(params).forEach((key) => {
@@ -66,4 +67,17 @@ export function formatBytes(bytes: number): string {
   }).format(bytes)
 
   return `${value}${units[i]}`
+}
+
+export function generateSKUCode(spuId: string, variationValues: { name: string; value: string }[]): string {
+  const variationString = variationValues.map((v) => v.value).join('-')
+
+  const hash = crypto
+    .createHash('md5')
+    .update(spuId + variationString)
+    .digest('hex')
+    .substring(0, 6)
+    .toUpperCase()
+
+  return `SKU-${hash}`
 }

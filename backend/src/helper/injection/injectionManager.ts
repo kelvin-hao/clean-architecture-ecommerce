@@ -54,7 +54,11 @@ export const ContainerInjectionRegistry = {
 
   ProductSKURepository: Symbol.for('ProductSKURepository'),
 
-  ProductSPURepository: Symbol.for('ProductSPURepository')
+  ProductSPURepository: Symbol.for('ProductSPURepository'),
+
+  ProductService: Symbol.for('ProductService'),
+
+  ProductController: Symbol.for('ProductController')
 }
 
 class ContainerInjection {

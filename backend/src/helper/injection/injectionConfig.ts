@@ -27,6 +27,8 @@ import VendorModel from '~/module/vendor/vendor.model'
 import VendorRepository from '~/module/vendor/vendor.repository'
 import VendorService from '~/module/vendor/vendor.service'
 import VendorController from '~/module/vendor/vendor.controller'
+import ProductService from '~/module/product/product.service'
+import ProductController from '~/module/product/product.controller'
 
 export function configureContainer(): Container {
   const container = new Container()
@@ -84,6 +86,10 @@ export function configureContainer(): Container {
   container.bind(ContainerInjectionRegistry.ProductSKURepository).to(ProductSKURepository).inSingletonScope()
 
   container.bind(ContainerInjectionRegistry.ProductSPURepository).to(ProductSPURepository).inSingletonScope()
+
+  container.bind(ContainerInjectionRegistry.ProductService).to(ProductService).inSingletonScope()
+
+  container.bind(ContainerInjectionRegistry.ProductController).to(ProductController).inSingletonScope()
 
   return container
 }

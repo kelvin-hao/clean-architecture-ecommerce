@@ -6,16 +6,18 @@ import createUploadRoute from './upload/upload.route'
 import createRBACRoute from './rbac/rbac.routes'
 import createAuthRoute from './auth/auth.route'
 import createCategoryRoute from './category/category.route'
+import createProductRoute from './product/product.route'
 
 const createRoute = async (): Promise<Router> => {
   const router = express.Router()
   const uploadRoute = createUploadRoute()
 
-  const [rbacRoute, authRoute, userRoute, categoryRoute] = await Promise.all([
+  const [rbacRoute, authRoute, userRoute, categoryRoute, productRoute] = await Promise.all([
     createRBACRoute(),
     createAuthRoute(),
     createUserRoute(),
-    createCategoryRoute()
+    createCategoryRoute(),
+    createProductRoute()
   ])
 
   router.get(routeConfig.checkHealthy.path, (req, res) => {
@@ -33,6 +35,7 @@ const createRoute = async (): Promise<Router> => {
   router.use(routeConfig.auth.path, authRoute)
   router.use(routeConfig.users.path, userRoute)
   router.use(routeConfig.categories.path, categoryRoute)
+  router.use(routeConfig.products.path, productRoute)
 
   return router
 }

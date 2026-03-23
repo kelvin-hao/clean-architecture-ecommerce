@@ -13,13 +13,13 @@ import {
   Min,
   Max
 } from 'class-validator'
-import { BaseExposeDTO, BaseDto } from '~/helper'
+import { BaseExposeDto, BaseDto } from '~/helper'
 import { IRole } from '~/types/interface'
 
 // --- Response DTO (Output) ---
 
 @Exclude()
-export class ResponseUserDTO extends BaseExposeDTO {
+export class ResponseUserDTO extends BaseExposeDto {
   @Expose()
   full_name: string
 

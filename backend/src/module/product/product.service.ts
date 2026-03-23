@@ -1,92 +1,90 @@
-// import { ContainerInjectionRegistry } from '~/helper/injection/injectionManager'
-// import ProductSKURepository from './product_sku.repository'
-// import { inject, injectable } from 'inversify'
-// import ProductSPURepository from './product._spu.repository'
-// import Redis from 'ioredis'
-// import { BadRequestError } from '~/helper/response/errorResponse'
-// import { ProductAttribute } from '~/types/type'
+import { ContainerInjectionRegistry } from '~/helper/injection/injectionManager'
+import ProductSKURepository from './product_sku.repository'
+import { inject, injectable } from 'inversify'
+import ProductSPURepository from './product._spu.repository'
+import Redis from 'ioredis'
+import { BadRequestError } from '~/helper/response/errorResponse'
+import { VariationOption, VariationValue } from '~/types/type'
+import { CreateProductSPUDto, ProductQueryDto, ProductResponseDto } from './product.dto'
+import UserRepository from '../user/user.repository'
+import CategoryRepository from '../category/caterogy.repository'
+import { convertToObjectId, generateSKUCode, slugify } from '~/utils'
+import { APIFeatures } from '~/helper'
+import { plainToInstance } from 'class-transformer'
 
-// @injectable()
-// class ProductService {
-//   constructor(
-//     @inject(ContainerInjectionRegistry.ProductSKURepository) private skuRepository: ProductSKURepository,
-//     @inject(ContainerInjectionRegistry.ProductSPURepository) private spuRepository: ProductSPURepository,
-//     @inject(ContainerInjectionRegistry.RedisDB) private redisClient: Redis
-//   ) {}
+@injectable()
+class ProductService {
+  constructor(
+    @inject(ContainerInjectionRegistry.ProductSKURepository) private skuRepository: ProductSKURepository,
+    @inject(ContainerInjectionRegistry.ProductSPURepository) private spuRepository: ProductSPURepository,
+    @inject(ContainerInjectionRegistry.UserRepository) private userRepository: UserRepository,
+    @inject(ContainerInjectionRegistry.CategoryRepository) private categoryRepository: CategoryRepository,
+    @inject(ContainerInjectionRegistry.RedisDB) private redisClient: Redis
+  ) {}
 
-//   private generateSKUCode(productName: string, attrs: Record<string, string>) {
-//     const base = productName.replace(/\s+/g, '-').toUpperCase()
-//     const varirants = Object.values(attrs).join('-').toUpperCase()
+  async createProduct(payload: CreateProductSPUDto) {
+    // const [existingVendor, existingCategory] = await Promise.allSettled([
+    //   this.userRepository.findById(payload.vendor),
+    //   this.categoryRepository.findById(payload.category)
+    // ])
+    // if (!existingVendor || !existingCategory) throw new BadRequestError('Can not create product. Please try again')
 
-//     return `${base}-${varirants}`
-//   }
+    return this.spuRepository.withTransaction(async (session) => {
+      const spu = await this.spuRepository.create(
+        {
+          ...payload,
+          slug: slugify(payload.name),
+          vendor: convertToObjectId(payload.vendor),
+          category: convertToObjectId(payload.category)
+        },
+        { session: session }
+      )
 
-//   async createProduct(dto: CreateProductDTO) {
-//     const skus = await this.skuRepository.findAll({
-//       _id: { $in: dto.sku_ids }
-//     })
+      if (!spu) throw new BadRequestError('Can not create product. Please try again')
+      const combinations = this.generateCombinations(spu.variationOptions)
+      const skusData = combinations.map((combo, _) => ({
+        spu: spu._id,
+        sku_code: generateSKUCode(spu._id.toString(), combo),
+        variationValues: combo,
+        price: payload.base_price
+      }))
+      await this.skuRepository.createMany(skusData, session)
+      return {
+        spu: spu._id
+      }
+    })
+  }
 
-//     if (skus.length !== dto.sku_ids.length) {
-//       throw new Error('Some SKUs not found')
-//     }
+  async getProducts(query: ProductQueryDto) {
+    const productsFeatures = new APIFeatures(this.spuRepository.getQuery(), query).paginate()
+    const products = await productsFeatures.exec()
 
-//     const product = await this.spuRepository.create({
-//       name: dto.name,
-//       slug: dto.slug,
-//       category: dto.categoryId,
-//       attributes: dto.attributes,
-//       sku_ids: dto.sku_ids,
-//       images: dto.images
-//     })
+    const responseProducts = products.map((product) =>
+      plainToInstance(ProductResponseDto, product, {
+        excludeExtraneousValues: true
+      })
+    )
+    return {
+      data: responseProducts
+    }
+  }
 
-//     // 🔥 update SKU → link back to product
-//     await this.skuRepository.updateMany({ _id: { $in: dto.sku_ids } }, { productId: product._id })
+  private generateCombinations(options: VariationOption[]): VariationValue[][] {
+    return options.reduce<VariationValue[][]>(
+      (acc, option) => {
+        const result: VariationValue[][] = []
 
-//     return product
-//   }
+        acc.forEach((prev) => {
+          option.options.forEach((value) => {
+            result.push([...prev, { name: option.name, value }])
+          })
+        })
 
-//   async createSKUs(dto: CreateSkuDto) {
-//     const variants = this.generateVariants(dto.variants)
+        return result
+      },
+      [[]]
+    )
+  }
+}
 
-//     const skus = variants.map((attrs) => ({
-//       attributes: attrs,
-//       price: dto.basePrice,
-//       stock: 0,
-//       reservedStock: 0,
-//       skuCode: this.generateSKUCode(dto.name, attrs)
-//     }))
-
-//     const codes = new Set()
-//     for (const sku of skus) {
-//       if (codes.has(sku.skuCode)) {
-//         throw new BadRequestError('Duplicate SKU generated')
-//       }
-//       codes.add(sku.skuCode)
-//     }
-//     const created = await this.skuRepository.insertMany(skus)
-
-//     return created
-//   }
-
-//   private generateVariants(attrs: ProductAttribute[]): Record<string, string>[] {
-//     return attrs.reduce(
-//       (acc, att) => {
-//         const result: Record<string, string>[] = []
-
-//         acc.forEach((pre) => {
-//           att.options.forEach((opt) => {
-//             result.push({
-//               ...pre,
-//               [att.name]: opt
-//             })
-//           })
-//         })
-
-//         return result
-//       },
-//       [{}]
-//     )
-//   }
-// }
-
-// export default ProductService
+export default ProductService

@@ -1,6 +1,6 @@
 import { Exclude, Expose } from 'class-transformer'
 import { ArrayNotEmpty, IsArray, IsOptional, IsString, Length } from 'class-validator'
-import { BaseDto, BaseExposeDTO } from '~/helper'
+import { BaseDto, BaseExposeDto } from '~/helper'
 
 export class CreateRoleDTO extends BaseDto {
   @IsString()
@@ -34,7 +34,7 @@ export class CreatePermissionDTO extends BaseDto {
 }
 
 @Exclude()
-export class RoleResponseDTO extends BaseExposeDTO {
+export class RoleResponseDTO extends BaseExposeDto {
   @Expose()
   name: string
 
