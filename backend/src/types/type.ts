@@ -1,3 +1,4 @@
+import { Client } from '@elastic/elasticsearch'
 import Redis from 'ioredis'
 import mongoose from 'mongoose'
 
@@ -5,7 +6,7 @@ export type Constructor<T> = new () => T
 
 export type MongooseType = typeof mongoose
 
-export type ConnectionStrategyType = MongooseType | Redis
+export type ConnectionStrategyType = MongooseType | Redis | Client
 
 export type JwtPayload = {
   id: string
@@ -48,7 +49,8 @@ export enum ProductStatusEnum {
 
 export enum ConnectionsEnum {
   REDIS = 'redis',
-  MONGO = 'mongose'
+  MONGO = 'mongose',
+  ELASTICSEARCH = 'elasticsearch'
 }
 
 export enum RequestPartEnum {

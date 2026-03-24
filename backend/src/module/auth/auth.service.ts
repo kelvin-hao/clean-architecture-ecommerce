@@ -94,8 +94,7 @@ class AuthService {
 
     // send email
     await Promise.all([
-      await emailQueue.add('email-job', {
-        type: JobType.SEND_EMAIL,
+      await emailQueue.add(JobType.SEND_EMAIL, {
         payload: {
           recipient,
           message: htmlRegistrationTemplate,
@@ -290,8 +289,7 @@ class AuthService {
     const htmlResetPasswordTemplate = EMAIL_TEMPLATE_RESET_PASSWORD
 
     const emailQueue = await QueueManager.getQueue(QueueName.EMAIL)
-    await emailQueue.add('email-job', {
-      type: JobType.SEND_EMAIL,
+    await emailQueue.add(JobType.SEND_EMAIL, {
       payload: {
         recipient,
         message: htmlResetPasswordTemplate,

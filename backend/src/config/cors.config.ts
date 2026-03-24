@@ -1,5 +1,3 @@
-// File: ~/config/cors.config.ts
-
 import { CorsOptions } from 'cors'
 import env from './env/dotenv.config'
 import { ForbiddenError } from '~/helper/response/errorResponse'

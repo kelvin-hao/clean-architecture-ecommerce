@@ -13,8 +13,10 @@ export class MongooseConnection implements IConnectionStrategy<MongooseType> {
 
   async connect(): Promise<MongooseType> {
     try {
-      mongoose.set('debug', true)
-      mongoose.set('debug', { color: true })
+      if (env.BUILD_MODE !== 'production') {
+        mongoose.set('debug', true)
+        mongoose.set('debug', { color: true })
+      }
       await mongoose.connect(this.uri, {
         serverApi: { version: '1', strict: true, deprecationErrors: true },
         minPoolSize: 2,

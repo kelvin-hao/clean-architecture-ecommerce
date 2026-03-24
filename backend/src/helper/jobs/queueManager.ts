@@ -4,6 +4,7 @@ import { redisProvider } from '~/database'
 export enum QueueName {
   EMAIL = 'email-queue',
   INVENTORY = 'inventory-queue',
+  PRODUCT_INDEX = 'product-queue',
   NOTIFICATION = 'notification-queue'
 }
 

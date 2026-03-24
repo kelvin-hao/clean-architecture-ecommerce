@@ -1,8 +1,6 @@
-// File: ~/services/logger.service.ts
-
 import { createLogger, format, transports, Logger as WinstonLogger } from 'winston'
 import 'winston-daily-rotate-file'
-import { formatStackTrace } from '~/utils/formatStack'
+import { formatStackTrace } from '~/utils/formatStack.util'
 // import { hideSensitiveFields } from '~/utils/hideSensitiveFields'
 
 /**
@@ -43,13 +41,13 @@ class Logger {
   private buildLogFormat() {
     // In development, use a colorful, more readable format.
 
-    const textFormat = format.printf(({ level, timestamp, context, requestID, stack, ...meta }) => {
+    const textFormat = format.printf(({ level, timestamp, context, requestId, stack, ...meta }) => {
       const contextStr = context ? `[${context}]` : ''
-      const requestIDStr = requestID ? `[${requestID}]` : ''
-      const metaStr = Object.keys(meta).length ? `\n${JSON.stringify}` : ''
+      const requestIdStr = requestId ? `[${requestId}]` : ''
+      const metaStr = Object.keys(meta).length ? `\n${JSON.stringify(meta)}` : ''
       const stackStr = stack ? `\n${JSON.stringify(formatStackTrace(stack as string), null, 2)}` : '' // Format stack trace for readability
 
-      return `${timestamp} - ${level} - ${contextStr} - ${requestIDStr} \n${metaStr}
+      return `${timestamp} - ${level} - ${contextStr} - ${requestIdStr} \n${metaStr}
       \n${stackStr}`
     })
 

@@ -2,7 +2,9 @@ import { IJob } from '.'
 import { BadRequestError } from '../response/errorResponse'
 
 export enum JobType {
-  SEND_EMAIL = 'SEND_EMAIL'
+  SEND_EMAIL = 'SEND_EMAIL',
+  INDEX_PRODUCT = 'INDEX_PRODUCT',
+  DELETE_PRODUCT = 'DELETE_PRODUCT'
 }
 
 export class JobManager {

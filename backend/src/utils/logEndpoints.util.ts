@@ -52,20 +52,22 @@ export function logRoutesFromConfig(routeConfig: RouteConfig): void {
       const method = endpoint.method.toUpperCase()
 
       // Pad the method string so all paths align nicely
-      const paddedMethod = method.padEnd(7)
+      const paddedMethod = method.padEnd(0)
       const coloredMethod = getMethodColor(method)(paddedMethod)
 
       // Construct the full URL
       const fullPath = `${fullDomain}${env.API_PREFIX}${module.path}${endpoint.path}`
 
-      routes.push(`${coloredMethod} ${chalk.gray(fullPath)}`)
+      routes.push(`[ ${coloredMethod} ]  ${chalk.gray(fullPath)}`)
     }
   }
 
   // Sort the routes alphabetically and print them
   routes.sort().forEach((route) => console.log(route))
 
-  console.log(chalk.bold.cyan('\n------------------------------\n'))
+  console.log(
+    chalk.bold.cyan('\n--------------------------------------------------------------------------------------\n')
+  )
 }
 
 export default logRoutesFromConfig
