@@ -1,23 +1,18 @@
 import { createLogger, format, transports, Logger as WinstonLogger } from 'winston'
-import 'winston-daily-rotate-file'
-import { formatStackTrace } from '~/utils/formatStack.util'
-// import { hideSensitiveFields } from '~/utils/hideSensitiveFields'
+import DailyRotateFile from 'winston-daily-rotate-file'
+import { getRequestId } from '~/utils/request-context.util'
 
-/**
- * Optional configuration for the Logger instance.
- */
 interface LoggerConfig {
   logLevel?: 'info' | 'warn' | 'error' | 'debug'
   logDirectory?: string
+  serviceName?: string
 }
 
-/**
- * Metadata object for enriching log entries.
- */
 export interface LogData {
-  context?: string // The service or module where the log originates
-  requestID?: string // A unique ID to trace a request through the system
-  [key: string]: unknown // Allow any other arbitrary metadata
+  context?: string
+  userId?: string
+  orderId?: string
+  [key: string]: unknown
 }
 
 class Logger {
@@ -25,77 +20,107 @@ class Logger {
   private readonly isProduction = process.env.NODE_ENV === 'production'
 
   constructor(config: LoggerConfig = {}) {
-    const { logLevel = this.isProduction ? 'info' : 'debug', logDirectory = 'src/logs' } = config
+    const {
+      logLevel = this.isProduction ? 'info' : 'debug',
+      logDirectory = 'logs',
+      serviceName = 'ecommerce-service'
+    } = config
 
     this.winstonLogger = createLogger({
       level: logLevel,
-      format: this.buildLogFormat(),
+      format: this.buildFormat(serviceName),
       transports: this.buildTransports(logDirectory),
-      exitOnError: false // Do not exit on handled exceptions
+      defaultMeta: {
+        service: serviceName,
+        env: process.env.NODE_ENV || 'development'
+      },
+      exitOnError: false
     })
   }
 
-  /**
-   * Creates the log format, using JSON for production and a readable console format for development.
-   */
-  private buildLogFormat() {
-    // In development, use a colorful, more readable format.
+  private buildFormat(_: string) {
+    if (this.isProduction) {
+      return format.combine(
+        format.timestamp(),
+        format.errors({ stack: true }),
+        format((info) => {
+          return info
+        })(),
+        format.json()
+      )
+    }
 
-    const textFormat = format.printf(({ level, timestamp, context, requestId, stack, ...meta }) => {
-      const contextStr = context ? `[${context}]` : ''
-      const requestIdStr = requestId ? `[${requestId}]` : ''
-      const metaStr = Object.keys(meta).length ? `\n${JSON.stringify(meta)}` : ''
-      const stackStr = stack ? `\n${JSON.stringify(formatStackTrace(stack as string), null, 2)}` : '' // Format stack trace for readability
-
-      return `${timestamp} - ${level} - ${contextStr} - ${requestIdStr} \n${metaStr}
-      \n${stackStr}`
-    })
-
+    // DEV FORMAT (readable)
     return format.combine(
       format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
       format.errors({ stack: true }),
-      textFormat
+      format.printf(({ level, message, timestamp, stack, ...meta }) => {
+        const requestId = getRequestId()
+
+        return `
+${timestamp} [${level}]
+requestId=${requestId}
+message=${message}
+meta=${JSON.stringify(meta, null, 2)}
+${stack ? `stack=${stack}` : ''}
+`
+      })
     )
   }
 
-  /**
-   * Creates the transports (destinations) for the logs.
-   */
   private buildTransports(logDirectory: string) {
-    // A helper to create daily rotate files to avoid duplication
+    const transportList = []
+
+    if (!this.isProduction) {
+      transportList.push(new transports.Console())
+    }
+
+    // File rotation
     const createDailyRotateFile = (level: 'info' | 'error') =>
-      new transports.DailyRotateFile({
+      new DailyRotateFile({
         level,
         dirname: logDirectory,
         filename: `%DATE%.${level}.log`,
         datePattern: 'YYYY-MM-DD',
-        zippedArchive: true, // Compress old log files
+        zippedArchive: true,
         maxSize: '20m',
-        maxFiles: '14d' // Keep logs for 14 days
+        maxFiles: '14d'
       })
 
-    // new transports.Console()
-    const transportList = [createDailyRotateFile('info'), createDailyRotateFile('error')]
+    transportList.push(createDailyRotateFile('info'))
+    transportList.push(createDailyRotateFile('error'))
 
     return transportList
   }
 
-  /**
-   * Logs an informational message.
-   */
   public info(message: string, meta?: LogData): void {
     this.winstonLogger.info(message, meta)
   }
 
-  /**
-   * Logs an error message. It's best practice to pass an Error object.
-   */
-  public error(message: string, error?: Error, meta?: LogData): void {
-    const logMeta = { ...meta, stack: error?.stack }
-    this.winstonLogger.error(message, logMeta)
+  public warn(message: string, meta?: LogData): void {
+    this.winstonLogger.warn(message, meta)
+  }
+
+  public error(message: string, error?: unknown, meta?: LogData): void {
+    let errorMeta = {}
+
+    if (error instanceof Error) {
+      errorMeta = {
+        errorMessage: error.message,
+        errorName: error.name,
+        stack: error.stack
+      }
+    } else {
+      errorMeta = { error }
+    }
+
+    this.winstonLogger.error(message, {
+      ...meta,
+      ...errorMeta
+    })
   }
 }
 
-// Export a default singleton instance for easy use across the application
-const logger = new Logger()
-export default logger
+export const logger = new Logger()
+
+export default Logger

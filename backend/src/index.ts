@@ -4,7 +4,7 @@ import env from './config/env/dotenv.config'
 import exitAppHook from 'async-exit-hook'
 import expressApp, { initialExpressApp } from './app'
 import databaseManager from './database/dbManager'
-import logRoutesFromConfig from './utils/logEndpoints'
+import logRoutesFromConfig from './utils/logEndpoints.util'
 import routeConfig from './config/route.config'
 
 const bootstrapServer = async () => {
@@ -23,7 +23,7 @@ const bootstrapServer = async () => {
     callback()
   })
 
-  app.listen(8080, () => {
+  app.listen(env.PORT, () => {
     console.log(`🚀 Server is running on port ${env.PORT}.`)
   })
 }
