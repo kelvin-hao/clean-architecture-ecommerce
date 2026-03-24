@@ -93,7 +93,8 @@
     "twilio": "^5.10.3",
     "uuid": "^13.0.0",
     "winston": "^3.18.3",
-    "winston-daily-rotate-file": "^5.0.0"
+    "winston-daily-rotate-file": "^5.0.0",
+    "winston-loki": "^6.1.4"
   },
   "overrides": {
     "ioredis": "^5.10.0"

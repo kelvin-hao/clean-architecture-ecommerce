@@ -1,56 +1,51 @@
-/**
- * A list of common sensitive field names to hide by default.
- */
-const COMMON_SENSITIVE_FIELDS = [
+type AnyObject = Record<string, unknown>
+
+const DEFAULT_SENSITIVE_FIELDS = [
   'password',
+  'confirmPassword',
   'token',
   'accessToken',
   'refreshToken',
+  'authorization',
   'apiKey',
   'secret',
   'creditCard',
-  'cvv'
+  'cardNumber',
+  'cvv',
+  'otp'
 ]
 
-/**
- * Recursively clones an object while hiding specified sensitive fields.
- *
- * @param data The object or data to sanitize.
- * @param fieldsToHide An array of string keys to hide. Defaults to common sensitive fields.
- * @returns A new object with sensitive fields redacted.
- */
-export function hideSensitiveFields<T>(data: T, fieldsToHide: string[] = COMMON_SENSITIVE_FIELDS): T {
-  // Use a Set for faster lookups (O(1) vs O(n) for an array)
-  const sensitiveFieldSet = new Set(fieldsToHide.map((field) => field.toLowerCase()))
+interface MaskOptions {
+  mask?: string
+  sensitiveFields?: string[]
+}
+
+export function hideSensitiveFields<T extends AnyObject>(data: T, options: MaskOptions = {}): T {
+  const { mask = '***', sensitiveFields = DEFAULT_SENSITIVE_FIELDS } = options
+
+  const seen = new WeakSet()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function recurse(currentData: any): any {
-    // If the data is not an object (e.g., string, number, null), return it as is
-    if (typeof currentData !== 'object' || currentData === null) {
-      return currentData
+  const sanitize = (obj: any): any => {
+    if (obj === null || typeof obj !== 'object') return obj
+
+    if (seen.has(obj)) return obj
+    seen.add(obj)
+
+    if (Array.isArray(obj)) return obj.map(sanitize)
+
+    const result: AnyObject = {}
+
+    for (const key of Object.keys(obj)) {
+      const lowerKey = key.toLowerCase()
+
+      const isSensitive = sensitiveFields.some((field) => lowerKey.includes(field))
+
+      result[key] = isSensitive ? mask : sanitize(obj[key])
     }
 
-    // Handle arrays by recursively calling this function on each item
-    if (Array.isArray(currentData)) {
-      return currentData.map((item) => recurse(item))
-    }
-
-    // Handle objects by cloning and redacting sensitive fields
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const newObject: { [key: string]: any } = {}
-    for (const key in currentData) {
-      // Ensure we only process the object's own properties
-      if (Object.prototype.hasOwnProperty.call(currentData, key)) {
-        if (sensitiveFieldSet.has(key.toLowerCase())) {
-          newObject[key] = '[REDACTED]'
-        } else {
-          // If the key is not sensitive, process its value recursively
-          newObject[key] = recurse(currentData[key])
-        }
-      }
-    }
-    return newObject
+    return result
   }
 
-  return recurse(data)
+  return sanitize(data) as T // ✅ preserve type
 }

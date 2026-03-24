@@ -2,7 +2,6 @@ import express, { Express } from 'express'
 import helmet from 'helmet'
 import { notFound } from './middleware/notFound.mid'
 import { errorHandler } from './middleware/errorHandle.mid'
-import { loggerRequest } from './middleware/logger.mid'
 import morgan from 'morgan'
 import createRoute from './module'
 import { generalApiLimiter } from './middleware/rateLimiter.mid'
@@ -19,6 +18,9 @@ import swaggerJsdoc from 'swagger-jsdoc'
 import initialInjection from './helper/injection'
 import initialIndices from './database/elasticsearch'
 import initialConfig from './config'
+import { requestContextMiddleware } from './middleware/requestContextMiddleware'
+import { httpLoggerMiddleware } from './middleware/httpLoggerMiddleware '
+import { errorLoggerMiddleware } from './middleware/errorLoggerMiddleware'
 
 const expressApp = async (app: Express) => {
   const router = await createRoute()
@@ -49,13 +51,13 @@ const expressApp = async (app: Express) => {
     },
     apis: ['./docs/*.yaml']
   }
+
   const swaggerSpec = swaggerJsdoc(options)
 
   app.use(helmet())
 
   app.use(
     compression({
-      // just compress when response is big
       threshold: 1024 // 1kb
     })
   )
@@ -71,7 +73,9 @@ const expressApp = async (app: Express) => {
 
   app.use(morgan(MORGAN_FORMAT))
 
-  app.use(loggerRequest)
+  app.use(requestContextMiddleware)
+
+  app.use(httpLoggerMiddleware)
 
   app.use(generalApiLimiter)
 
@@ -80,6 +84,8 @@ const expressApp = async (app: Express) => {
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 
   app.use(notFound)
+
+  app.use(errorLoggerMiddleware)
 
   app.use(errorHandler)
 }
