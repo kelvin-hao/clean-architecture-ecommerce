@@ -89,15 +89,18 @@ class CategoryService {
 
       const [_, res] = await Promise.all([
         await this.updateChildrenPath(category._id, newPath),
-        await this.categoryRepository.update(categoryID, data)
+        await this.categoryRepository.update({ _id: categoryID }, data)
       ])
 
       if (!res?._id) throw new BadRequestError('Something went wrong')
     }
 
-    const res = await this.categoryRepository.update(categoryID, {
-      name: payload.name
-    })
+    const res = await this.categoryRepository.update(
+      { _id: categoryID },
+      {
+        name: payload.name
+      }
+    )
     if (!res?._id) throw new BadRequestError('Something went wrong')
 
     return {
@@ -153,10 +156,13 @@ class CategoryService {
     for (const child of children) {
       const newPath = [...parentPath, parentId]
 
-      await this.categoryRepository.update(child._id.toString(), {
-        path: newPath,
-        level: newPath.length
-      })
+      await this.categoryRepository.update(
+        { _id: child._id.toString() },
+        {
+          path: newPath,
+          level: newPath.length
+        }
+      )
 
       await this.updateChildrenPath(child._id, newPath)
     }

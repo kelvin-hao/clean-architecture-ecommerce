@@ -1,3 +1,4 @@
+import { estypes } from '@elastic/elasticsearch'
 import { Document, Types } from 'mongoose'
 
 export interface IConnectionStrategy<T> {
@@ -9,6 +10,7 @@ export interface INotificationStrategy {
   send(recipient: string, message: string, subject?: string): Promise<void>
 }
 
+// mongo schema
 export interface IPermission extends Document {
   _id: Types.ObjectId
   key: string
@@ -21,4 +23,10 @@ export interface IRole extends Document {
   name: string
   description?: string
   permissions: Types.ObjectId[]
+}
+
+export interface IndexConfig {
+  name: string
+  settings?: estypes.IndicesIndexSettings
+  mappings: estypes.MappingTypeMapping
 }

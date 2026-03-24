@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express'
 import { env } from 'process'
 import logger from '~/config/winton.config'
 import { CONTEXT } from '~/utils/const.util'
-import { formatStackTrace, FormattedError } from '~/utils/formatStack'
+import { formatStackTrace, FormattedError } from '~/utils/formatStack.util'
 import { ErrorResponseBase } from '~/helper/response'
 import { StatusReasons } from '~/helper/response/statusReason'
 

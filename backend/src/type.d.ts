@@ -7,7 +7,7 @@ declare global {
     interface Request {
       user?: JwtPayload
       locals: {
-        requestID: string
+        requestId: string
         userId: string
         ipAddress: string
       }

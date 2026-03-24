@@ -8,3 +8,9 @@ export class SendEmailJob implements IJob {
     await emailNotification.sendNotification(payload)
   }
 }
+
+// export class IndexProduct implements IJob {
+//   async execute(payload: {id:string}): Promise<void> {
+
+//   }
+// }

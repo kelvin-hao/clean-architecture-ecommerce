@@ -1,7 +1,7 @@
 import { IsNotEmpty, IsString } from 'class-validator'
 import { BaseDto } from '~/helper'
 
-export class DTOEnv extends BaseDto {
+export class DtoEnv extends BaseDto {
   @IsString()
   @IsNotEmpty()
   PORT!: number
@@ -77,4 +77,13 @@ export class DTOEnv extends BaseDto {
 
   @IsString()
   GOOGLE_REDIRECT_URI: string
+
+  @IsString()
+  ES_NODE: string
+
+  @IsString()
+  ES_USERNAME: string
+
+  @IsString()
+  ES_PWD: string
 }

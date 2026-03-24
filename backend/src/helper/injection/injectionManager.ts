@@ -4,6 +4,8 @@ import { BadRequestError } from '../response/errorResponse'
 export const ContainerInjectionRegistry = {
   RedisDB: Symbol.for('RedisDB'),
 
+  ElasticsearchDB: Symbol.for('ElasticsearchDB'),
+
   UploadService: Symbol.for('UploadService'),
 
   UploadController: Symbol.for('UploadController'),

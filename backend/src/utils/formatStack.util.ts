@@ -40,7 +40,7 @@ export function formatStackTrace(stackTraceString: string | null): FormattedErro
         return null
       }
 
-      const [, functionName, file, lineStr, columnStr] = match
+      const [functionName, file, lineStr, columnStr] = match
 
       return {
         functionName: functionName || 'anonymous',

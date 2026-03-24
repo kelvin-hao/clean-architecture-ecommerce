@@ -12,13 +12,13 @@ import env from './config/env/dotenv.config'
 import compression from 'compression'
 import { MORGAN_FORMAT } from './utils/const.util'
 import { initializeDatabase } from './database'
-import configCloudinary from './config/cloudinary.config'
 import { initializeScheduler } from './helper/cron'
 import { initializeBackgroundJob } from './helper/jobs'
 import swaggerUi from 'swagger-ui-express'
 import swaggerJsdoc from 'swagger-jsdoc'
-import { configureContainer } from './helper/injection/injectionConfig'
-import { containerInjection } from './helper/injection/injectionManager'
+import initialInjection from './helper/injection'
+import initialIndices from './database/elasticsearch'
+import initialConfig from './config'
 
 const expressApp = async (app: Express) => {
   const router = await createRoute()
@@ -85,15 +85,14 @@ const expressApp = async (app: Express) => {
 }
 
 export const initialExpressApp = async () => {
-  await initializeDatabase()
+  initialConfig()
 
-  const container = configureContainer()
-  containerInjection.setContainer(container)
+  initialInjection()
 
-  configCloudinary()
   initializeScheduler()
 
-  await initializeBackgroundJob()
+  // asynchronous
+  await Promise.allSettled([initializeDatabase(), initializeBackgroundJob(), initialIndices()])
 }
 
 export default expressApp

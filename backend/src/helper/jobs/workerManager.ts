@@ -1,7 +1,7 @@
 import { redisProvider } from '~/database'
 import { QueueName } from './queueManager'
 import { Worker } from 'bullmq'
-import { JobManager } from './jobManager'
+import { JobManager, JobType } from './jobManager'
 
 export class WorkerManager {
   static async createWorker(queueName: QueueName, concurrency = 1) {
@@ -10,8 +10,8 @@ export class WorkerManager {
     const worker = new Worker(
       queueName,
       async (job) => {
-        const { type, payload } = job.data
-        await JobManager.get(type).execute(payload)
+        const { payload } = job.data
+        await JobManager.get(job.name as JobType).execute(payload)
       },
       {
         connection: redis,

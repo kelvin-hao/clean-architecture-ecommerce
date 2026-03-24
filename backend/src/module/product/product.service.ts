@@ -8,9 +8,10 @@ import { VariationOption, VariationValue } from '~/types/type'
 import { CreateProductSPUDto, ProductQueryDto, ProductResponseDto } from './product.dto'
 import UserRepository from '../user/user.repository'
 import CategoryRepository from '../category/caterogy.repository'
-import { convertToObjectId, generateSKUCode, slugify } from '~/utils'
+import { convertToObjectId, slugify } from '~/utils'
 import { APIFeatures } from '~/helper'
 import { plainToInstance } from 'class-transformer'
+import { generateSKUCode } from '~/utils/product.util'
 
 @injectable()
 class ProductService {
@@ -39,15 +40,17 @@ class ProductService {
         },
         { session: session }
       )
-
       if (!spu) throw new BadRequestError('Can not create product. Please try again')
+
       const combinations = this.generateCombinations(spu.variationOptions)
+
       const skusData = combinations.map((combo, _) => ({
         spu: spu._id,
         sku_code: generateSKUCode(spu._id.toString(), combo),
         variationValues: combo,
         price: payload.base_price
       }))
+
       await this.skuRepository.createMany(skusData, session)
       return {
         spu: spu._id

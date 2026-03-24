@@ -1,69 +1,47 @@
-version: '3.9'
+version: '3.8'
 
 services:
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: ecommerce-backend
-    restart: unless-stopped
-    ports:
-      - '8080:8080'
-    env_file:
-      - .env
-    depends_on:
-      - mongodb
-      - redis
-      - elasticsearch
-    networks:
-      - ecommerce-network
-
-  mongodb:
-    image: mongo:7
-    container_name: mongodb
-    restart: unless-stopped
-    ports:
-      - '27017:27017'
-    volumes:
-      - mongo-data:/data/db
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: password
-    networks:
-      - ecommerce-network
-
-  redis:
-    image: redis:7
-    container_name: redis
-    restart: unless-stopped
-    ports:
-      - '6379:6379'
-    command: ['redis-server', '--appendonly', 'yes']
-    volumes:
-      - redis-data:/data
-    networks:
-      - ecommerce-network
-
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
     container_name: elasticsearch
-    restart: unless-stopped
     environment:
+      - node.name=es-node
+      - cluster.name=es-docker-cluster
       - discovery.type=single-node
-      - xpack.security.enabled=false
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+
+      # Enable security
+      - xpack.security.enabled=true
+      - xpack.security.enrollment.enabled=true
+
+      # Memory
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+
+      # Set default password
+      - ELASTIC_PASSWORD=elastic123
     ports:
       - '9200:9200'
     volumes:
-      - es-data:/usr/share/elasticsearch/data
+      - es_data:/usr/share/elasticsearch/data
     networks:
-      - ecommerce-network
+      - elastic
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.12.0
+    container_name: kibana
+    depends_on:
+      - elasticsearch
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+
+      # Login with elastic user
+      - ELASTICSEARCH_SERVICEACCOUNTTOKEN=AAEAAWVsYXN0aWMva2liYW5hL2tpYmFuYS10b2tlbjpkbTFwbE80SFIzNnI4ODFCLVFtV0R3
+    ports:
+      - '5601:5601'
+    networks:
+      - elastic
 
 volumes:
-  mongo-data:
-  redis-data:
-  es-data:
+  es_data:
 
 networks:
-  ecommerce-network:
-    driver: bridge
+  elastic:

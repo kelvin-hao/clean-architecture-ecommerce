@@ -5,16 +5,16 @@ import { CONTEXT } from '~/utils/const.util'
 
 const messageLog = 'INCOMING REQUEST'
 
-export const loggerRequest = (req: Request, res: Response, next: NextFunction) => {
-  const requestID = uuidv4()
+export const loggerRequest = (req: Request, _: Response, next: NextFunction) => {
+  const requestId = uuidv4()
   const userId = req.header('x-user-id') || 'unknown'
   const ipAddress = req.ip || 'unkown'
 
   // Attach request ID to request and log initial request data
-  req.locals = { requestID, userId, ipAddress }
+  req.locals = { requestId, userId, ipAddress }
   logger.info(messageLog, {
     context: CONTEXT.REQUEST,
-    requestID,
+    requestId,
     userId,
     ipAddress,
     pathURL: req.originalUrl,
