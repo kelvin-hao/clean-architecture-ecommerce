@@ -6,11 +6,6 @@ declare global {
   namespace Express {
     interface Request {
       user?: JwtPayload
-      locals: {
-        requestId: string
-        userId: string
-        ipAddress: string
-      }
       bodyValidated?: BaseDto
       queryValidated?: BaseDto
       paramsValidated?: BaseDto

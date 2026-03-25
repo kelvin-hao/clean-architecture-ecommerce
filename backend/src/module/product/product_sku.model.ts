@@ -1,4 +1,4 @@
-import mongoose, { Document, HydratedDocument, Schema, Types } from 'mongoose'
+import mongoose, { Document, Schema, Types } from 'mongoose'
 import { VariationValue } from '~/types/type'
 import { DATABASE_DOCUMENT } from '~/utils/const.util'
 
@@ -14,7 +14,6 @@ export interface IProductSKU extends Document {
   is_active?: boolean
 }
 
-export type ProductSKUDocument = HydratedDocument<IProductSKU>
 const productSKUSchema = new Schema<IProductSKU>(
   {
     spu: {
