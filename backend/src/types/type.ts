@@ -89,6 +89,12 @@ export enum PAYMENT_METHOD {
   SEPAY = 'SEPAY'
 }
 
+export enum PAYMENT_STATUS {
+  PENDING = 'pending',
+  SUCCESS = 'success',
+  FAILED = 'failed'
+}
+
 export enum VendorApplicationStatusEnum {
   PENDING = 'PENDING',
   APPROVED = 'APPROVED',

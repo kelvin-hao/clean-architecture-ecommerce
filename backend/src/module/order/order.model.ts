@@ -1,6 +1,6 @@
 import { DATABASE_DOCUMENT } from './../../utils/const.util'
 import mongoose, { Schema, Types } from 'mongoose'
-import { ORDER_STATUS, PAYMENT_METHOD } from '~/types/type'
+import { ORDER_STATUS } from '~/types/type'
 
 const ORDER_COLLECTION = 'orders'
 const ORDER_DOCUMENT = 'order'
@@ -22,7 +22,6 @@ export interface IOrder extends Document {
   total_price: number
   status: ORDER_STATUS
   shipping_address: string
-  payment_method: PAYMENT_METHOD
   isPaied: boolean
 }
 
@@ -72,12 +71,6 @@ const OrderSchema = new Schema<IOrder>(
 
     shipping_address: {
       Type: String
-    },
-
-    payment_method: {
-      Type: String,
-      enum: PAYMENT_METHOD,
-      default: PAYMENT_METHOD.COD
     },
 
     isPaied: {

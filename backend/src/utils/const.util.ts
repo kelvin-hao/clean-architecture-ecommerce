@@ -17,7 +17,9 @@ export const DATABASE_DOCUMENT = {
   PRODUCT_SKU: 'product_sku',
   PERMISSION: 'permission',
   ROLE: 'role',
-  ORDER: 'order'
+  ORDER: 'order',
+  INVENTORY: 'inventory',
+  PAYMENT: 'payment'
 }
 
 export const MAX_LEVEL_CATEGORY = 5

@@ -45,15 +45,15 @@ export abstract class RepositoryBase<T extends Document> implements IRepositoryB
   }
 
   async findById(id: string): Promise<T | null> {
-    return this.model.findById(id).exec()
+    return this.model.findById({ _id: id, is_delete: false }).exec()
   }
 
   async findOne(condition: FilterQuery<T>): Promise<T | null> {
-    return this.model.findOne(condition).exec()
+    return this.model.findOne({ ...condition, is_delete: false }).exec()
   }
 
   async findAll(condition?: FilterQuery<T>): Promise<T[]> {
-    return this.model.find(condition || {}).exec()
+    return this.model.find({ ...condition, is_delete: false }).exec()
   }
 
   async update(filter: FilterQuery<T>, update: UpdateQuery<T>, session?: ClientSession): Promise<T | null> {
