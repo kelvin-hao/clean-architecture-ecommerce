@@ -35,7 +35,7 @@ export function configureContainer(): Container {
 
   container.bind(ContainerInjectionRegistry.RedisDB).toDynamicValue(redisProvider).inSingletonScope()
 
-  container.bind(ContainerInjectionRegistry.ElasticsearchDB).toDynamicValue(elasticSearchProvider).inSingletonScope()
+  // container.bind(ContainerInjectionRegistry.ElasticsearchDB).toDynamicValue(elasticSearchProvider).inSingletonScope()
 
   container.bind(UploadService).toSelf().inSingletonScope()
 

@@ -80,7 +80,7 @@ function validationInput<T extends BaseDto>(dtoClass: ClassConstructor<T>, sourc
     if (errors.length > 0) {
       const formattedErrors = formatErrors(errors)
       // Pass the structured error object, not a stringified version.
-      return next(new BadRequestError(formattedErrors))
+      return next(new BadRequestError(formattedErrors.join(' ').toString()))
     }
     // Stage 4: Replace the original request part with the sanitized and validated DTO.
     // This provides a type-safe and clean object to your controllers.

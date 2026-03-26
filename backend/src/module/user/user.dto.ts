@@ -21,7 +21,7 @@ import { IRole } from '~/types/interface'
 @Exclude()
 export class ResponseUserDTO extends BaseExposeDto {
   @Expose()
-  full_name: string
+  name: string
 
   @Expose()
   phone_number: string
@@ -70,7 +70,7 @@ export class GetUsersQueryDTO extends BaseDto {
 
   @IsOptional()
   @IsString()
-  full_name?: string
+  name?: string
 
   @IsOptional()
   @IsString()
@@ -80,7 +80,7 @@ export class GetUsersQueryDTO extends BaseDto {
 export class ImportUseFromCSVDTO extends BaseDto {
   @IsString({ message: 'Full name must be a string.' })
   @Length(3, 256)
-  full_name: string
+  name: string
 
   @IsEmail()
   email: string
@@ -111,7 +111,7 @@ export class IDParamsDTO extends BaseDto {
 export class EditProfileDTO extends BaseDto {
   @IsString({ message: 'Full name must be a string.' })
   @IsOptional()
-  full_name: string
+  name: string
 
   @IsPhoneNumber('VN', { message: 'Phone number must be a valid phone number.' })
   @IsOptional()

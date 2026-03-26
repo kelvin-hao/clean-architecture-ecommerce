@@ -11,7 +11,7 @@ import {
   RefreshTokenDTO,
   ResetPasswordDTO,
   VerifyToken2FADTO,
-  ParamsCodeDTO
+  VerifyOtpDto
 } from './auth.dto'
 import { JwtPayload } from '~/types/type'
 
@@ -29,8 +29,8 @@ class AuthController {
   }
 
   async verificationToken(req: Request, res: Response) {
-    const { code } = req.paramsValidated as ParamsCodeDTO
-    const data = await this.authService.verificationToken(code)
+    const { otp } = req.bodyValidated as VerifyOtpDto
+    const data = await this.authService.verificationToken(otp)
 
     return new CreatedResponse(data).send(req, res)
   }

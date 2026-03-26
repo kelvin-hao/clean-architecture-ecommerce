@@ -1,7 +1,6 @@
 import { Request, Response } from 'express'
 // import { cookieOptions } from '~/config/cookie.config'
-import logger from '~/config/winton.config'
-import { CONTEXT } from '../../utils/const.util'
+
 import { format } from 'fast-csv'
 
 export class ErrorResponseBase extends Error {
@@ -20,21 +19,7 @@ export class SuccessResponseBase<T> {
     public data: Partial<T>
   ) {}
 
-  private logSuccess(req: Request) {
-    logger.info(this.message, {
-      context: CONTEXT.SUSSESS,
-      requestID: req.locals.requestID,
-      ipAddress: req.locals.ipAddress,
-      userId: req.user?.id,
-      statusCode: this.statusCode,
-      metaData: this.data,
-      pathURL: req.originalUrl,
-      body: req.body
-    })
-  }
-
   send(req: Request, res: Response) {
-    this.logSuccess(req)
     res.status(this.statusCode).json(this)
   }
 

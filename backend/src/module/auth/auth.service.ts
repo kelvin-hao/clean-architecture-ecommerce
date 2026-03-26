@@ -15,7 +15,8 @@ import { ContainerInjectionRegistry } from '~/helper/injection/injectionManager'
 import {
   EMAIL_TEMPLATE_RESET_PASSWORD,
   EMAIL_TEMPLATE_TWO_STEP_VERIFICATION,
-  FIFTEN_MINUTES_IN_SECONDS
+  FIFTEN_MINUTES_IN_SECONDS,
+  ONE_MINUTES_IN_SECONDS
 } from '~/utils/const.util'
 import jsonWebToken from '~/helper/jwt'
 import { JwtPayload } from '~/types/type'
@@ -30,7 +31,7 @@ import {
   VerifyToken2FADTO
 } from './auth.dto'
 import { OAuth2Client } from 'google-auth-library'
-import { SEVEN_DAYS_IN_SECONDS, FIVE_MINUTES_IN_SECONDS, ONE_MINUTES_IN_SECONDS } from '~/utils/const.util'
+import { SEVEN_DAYS_IN_SECONDS } from '~/utils/const.util'
 import { randomBytes } from 'crypto'
 
 import env from '~/config/env/dotenv.config'
@@ -80,7 +81,7 @@ class AuthService {
     })
 
     // cache infor user and verification key to validate
-    await this.redisClient.set(verrificationKey, userData, 'EX', FIVE_MINUTES_IN_SECONDS)
+    await this.redisClient.set(verrificationKey, userData, 'EX', ONE_MINUTES_IN_SECONDS)
 
     // set up data send email
     const recipient = payload.email
@@ -107,7 +108,7 @@ class AuthService {
     ])
 
     return {
-      message: 'The verification code has beent sent and it will exprie in 5 minutes'
+      email: payload.email
     }
   }
 
@@ -135,14 +136,14 @@ class AuthService {
       permissions.add(perm.key)
     }
 
-    await this.userRepository.create({
+    const user = await this.userRepository.create({
       ...userData,
       roles: [userRole._id],
       permissions: [...permissions]
     })
 
     return {
-      message: 'Verification is successful. Please login'
+      id: user._id
     }
   }
 
@@ -179,7 +180,7 @@ class AuthService {
 
       user = await this.userRepository.create({
         email: payload.email,
-        full_name: payload.name,
+        name: payload.name,
         avatar: {
           url: payload.picture!
         },

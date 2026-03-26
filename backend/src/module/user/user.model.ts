@@ -11,13 +11,12 @@ export interface IUser extends Document {
   roles: Types.ObjectId[]
   permissions: string[]
   password: string
-  full_name: string
+  name: string
   is_delete: boolean
   status: UserStatusEnum
   avatar: Image
   two_FA: boolean
   two_FA_secret: string
-  phone_number: string
   createdAt: Date
   updatedAt: Date
 }
@@ -73,7 +72,7 @@ const UserSchema: Schema = new Schema<IUser>(
       select: false
     },
 
-    full_name: {
+    name: {
       type: String,
       required: true,
       trim: true
@@ -86,11 +85,6 @@ const UserSchema: Schema = new Schema<IUser>(
         default: DEFAULT_AVATAR
       },
       alt: String
-    },
-
-    phone_number: {
-      type: String,
-      trim: true
     },
 
     is_delete: {

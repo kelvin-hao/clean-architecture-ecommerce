@@ -9,11 +9,11 @@ import {
   RegisterDTO,
   ForgotPasswordDTO,
   LoginDTO,
-  ParamsCodeDTO,
   RefreshTokenDTO,
   ResetPasswordDTO,
   VerifyToken2FADTO,
-  GoogleLoginDTO
+  GoogleLoginDTO,
+  VerifyOtpDto
 } from './auth.dto'
 import isAuth from '~/middleware/isAuth.mid'
 
@@ -88,8 +88,8 @@ const createAuthRoute = async (): Promise<Router> => {
 
   authRoute
     .route(routeConfig.auth.child.verifyRegister.path)
-    .get(
-      validationInput(ParamsCodeDTO, RequestPartEnum.PARAMS),
+    .post(
+      validationInput(VerifyOtpDto, RequestPartEnum.BODY),
       catchErrorHandler(AuthController.verificationToken.bind(AuthController))
     )
 
