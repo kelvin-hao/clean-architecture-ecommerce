@@ -37,7 +37,6 @@ import { randomBytes } from 'crypto'
 import env from '~/config/env/dotenv.config'
 import { verify } from 'otplib'
 import RoleRepository from '../rbac/role.repository'
-import { IRoleWithPermissions } from '../rbac/role.model'
 import { QueueManager, QueueName } from '~/helper/jobs/queueManager'
 import { JobType } from '~/helper/jobs/jobManager'
 
@@ -125,21 +124,14 @@ class AuthService {
     if (existingUser) throw new ConflictError('User already existed')
 
     const userRole = await this.roleRepository.findOne({
-      name: 'User'
+      name: 'user'
     })
     if (!userRole) throw new BadRequestError('Something went wrong. Please try again')
 
-    const userRoleWithPermission = (await userRole?.populate('permissions')) as IRoleWithPermissions
-    const permissions = new Set<string>()
-
-    for (const perm of userRoleWithPermission.permissions) {
-      permissions.add(perm.key)
-    }
-
     const user = await this.userRepository.create({
       ...userData,
-      roles: [userRole._id],
-      permissions: [...permissions]
+      roles: [userRole.name],
+      permissions: userRole.permissions
     })
 
     return {
@@ -245,6 +237,7 @@ class AuthService {
 
     const jwtPayload: JwtPayload = {
       id: decodedToken.id,
+      roles: user.roles,
       sessionId: decodedToken.sessionId,
       permissions: user.permissions
     }
@@ -363,6 +356,7 @@ class AuthService {
     const jwtPayload: JwtPayload = {
       id: `${user._id}`,
       permissions: user.permissions,
+      roles: user.roles,
       sessionId
     }
 

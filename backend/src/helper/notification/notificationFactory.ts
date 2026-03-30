@@ -1,12 +1,8 @@
+import { NotifierType } from '~/types/type'
 import { BadRequestError } from '../response/errorResponse'
 import EmailNotification from './emailNotification'
 import NotficationTemplate from './notificationTemplate'
 import { SMSNotification } from './smsNotification'
-
-export enum NotifierType {
-  email,
-  sms
-}
 
 export class NotificationFactory {
   /**
@@ -16,10 +12,10 @@ export class NotificationFactory {
    */
   public static createNotifier(type: NotifierType): NotficationTemplate {
     switch (type) {
-      case NotifierType.email:
+      case NotifierType.EMAIL:
         return new EmailNotification()
 
-      case NotifierType.sms:
+      case NotifierType.SMS:
         return new SMSNotification()
 
       default:

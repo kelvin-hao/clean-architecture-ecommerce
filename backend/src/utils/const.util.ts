@@ -19,7 +19,10 @@ export const DATABASE_DOCUMENT = {
   ROLE: 'role',
   ORDER: 'order',
   INVENTORY: 'inventory',
-  PAYMENT: 'payment'
+  PAYMENT: 'payment',
+  NOTIFICATION: 'notification',
+  USER_NOTIFICATION: 'user_notification',
+  DISCOUNT: 'discount'
 }
 
 export const MAX_LEVEL_CATEGORY = 5

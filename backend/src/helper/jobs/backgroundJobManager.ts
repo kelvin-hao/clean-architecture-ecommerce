@@ -1,10 +1,11 @@
+import { NotifierType } from '~/types/type'
 import { IJob } from '.'
-import { NotificationFactory, NotifierType } from '../notification/notificationFactory'
+import { NotificationFactory } from '../notification/notificationFactory'
 import { ISendNotification } from '../notification/notificationTemplate'
 
 export class SendEmailJob implements IJob {
   async execute(payload: ISendNotification): Promise<void> {
-    const emailNotification = NotificationFactory.createNotifier(NotifierType.email)
+    const emailNotification = NotificationFactory.createNotifier(NotifierType.EMAIL)
     await emailNotification.sendNotification(payload)
   }
 }

@@ -1,14 +1,13 @@
 import mongoose, { Document, Schema, Types } from 'mongoose'
 import { Image, UserStatusEnum } from '~/types/type'
 import { DATABASE_DOCUMENT, DEFAULT_AVATAR } from '~/utils/const.util'
-import { IRoleWithPermissions } from '../rbac/role.model'
 
 const USER_COLLECTION = 'users'
 
 export interface IUser extends Document {
   _id: Types.ObjectId
   email: string
-  roles: Types.ObjectId[]
+  roles: string[]
   permissions: string[]
   password: string
   name: string
@@ -19,10 +18,6 @@ export interface IUser extends Document {
   two_FA_secret: string
   createdAt: Date
   updatedAt: Date
-}
-
-export interface IUserWithRoles extends Omit<IUser, 'roles'> {
-  roles: IRoleWithPermissions[]
 }
 
 const UserSchema: Schema = new Schema<IUser>(
@@ -36,8 +31,7 @@ const UserSchema: Schema = new Schema<IUser>(
 
     roles: [
       {
-        type: Schema.Types.ObjectId,
-        ref: DATABASE_DOCUMENT.ROLE
+        type: String
       }
     ],
 

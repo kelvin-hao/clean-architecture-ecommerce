@@ -1,12 +1,8 @@
 import mongoose, { Schema } from 'mongoose'
-import { IPermission, IRole } from '~/types/interface'
+import { IRole } from '~/types/interface'
 import { DATABASE_DOCUMENT } from '~/utils/const.util'
 
 const ROLE_COLLECTION = 'roles'
-
-export interface IRoleWithPermissions extends Omit<IRole, 'permissions'> {
-  permissions: IPermission[]
-}
 
 const RoleSchema: Schema = new Schema<IRole>(
   {
@@ -22,8 +18,7 @@ const RoleSchema: Schema = new Schema<IRole>(
     },
     permissions: [
       {
-        type: Schema.Types.ObjectId,
-        ref: DATABASE_DOCUMENT.PERMISSION
+        type: String
       }
     ]
   },

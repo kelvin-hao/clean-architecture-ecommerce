@@ -60,7 +60,13 @@ export const ContainerInjectionRegistry = {
 
   ProductService: Symbol.for('ProductService'),
 
-  ProductController: Symbol.for('ProductController')
+  ProductController: Symbol.for('ProductController'),
+
+  DiscountModel: Symbol.for('DiscountModel'),
+
+  DiscountRepository: Symbol.for('DiscountRepository'),
+
+  DiscountService: Symbol.for('DiscountService')
 }
 
 class ContainerInjection {

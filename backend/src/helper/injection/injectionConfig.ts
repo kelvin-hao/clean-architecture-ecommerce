@@ -10,9 +10,6 @@ import UploadController from '~/module/upload/upload.controller'
 import PermissionModel from '~/module/rbac/permission.model'
 import RoleModel from '~/module/rbac/role.model'
 import RoleRepository from '~/module/rbac/role.repository'
-import RBACService from '~/module/rbac/rbac.service'
-import RBACController from '~/module/rbac/rbac.controller'
-import PermissionRepository from '~/module/rbac/permission.repository'
 import AuthController from '~/module/auth/auth.controller'
 import AuthService from '~/module/auth/auth.service'
 import CategoryModel from '~/module/category/category.model'
@@ -29,6 +26,8 @@ import VendorService from '~/module/vendor/vendor.service'
 import VendorController from '~/module/vendor/vendor.controller'
 import ProductService from '~/module/product/product.service'
 import ProductController from '~/module/product/product.controller'
+import discountModel from '~/module/discount/discount.model'
+import DiscountRepository from '~/module/discount/discount.repository'
 
 export function configureContainer(): Container {
   const container = new Container()
@@ -46,12 +45,6 @@ export function configureContainer(): Container {
   container.bind(ContainerInjectionRegistry.PermissionModel).toConstantValue(PermissionModel)
 
   container.bind(ContainerInjectionRegistry.RoleRepository).to(RoleRepository).inSingletonScope()
-
-  container.bind(ContainerInjectionRegistry.PermissionRepository).to(PermissionRepository).inSingletonScope()
-
-  container.bind(ContainerInjectionRegistry.RBACService).to(RBACService).inSingletonScope()
-
-  container.bind(ContainerInjectionRegistry.RBACController).to(RBACController).inSingletonScope()
 
   container.bind(ContainerInjectionRegistry.UserModel).toConstantValue(UserModel)
 
@@ -92,6 +85,10 @@ export function configureContainer(): Container {
   container.bind(ContainerInjectionRegistry.ProductService).to(ProductService).inSingletonScope()
 
   container.bind(ContainerInjectionRegistry.ProductController).to(ProductController).inSingletonScope()
+
+  container.bind(ContainerInjectionRegistry.DiscountModel).toConstantValue(discountModel)
+
+  container.bind(ContainerInjectionRegistry.DiscountRepository).to(DiscountRepository).inSingletonScope()
 
   return container
 }

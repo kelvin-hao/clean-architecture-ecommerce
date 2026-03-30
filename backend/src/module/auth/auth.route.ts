@@ -17,12 +17,6 @@ import {
 } from './auth.dto'
 import isAuth from '~/middleware/isAuth.mid'
 
-/**
- * @swagger
- * tags:
- *   name: Auth
- *   description: Authentication APIs
- */
 const createAuthRoute = async (): Promise<Router> => {
   const container = containerInjection.getContainer()
   const AuthController = await container.getAsync<AuthController>(ContainerInjectionRegistry.AuthController)

@@ -53,11 +53,14 @@ class VendorService {
       throw new BadRequestError('Only pending vendor can be rejected')
     }
 
-    return this.vendorRepository.update(vendorId, {
-      status_application: VendorApplicationStatusEnum.REJECTED,
-      reject_reason: payload.reason,
-      verified: false
-    })
+    return this.vendorRepository.update(
+      { _id: vendorId },
+      {
+        status_application: VendorApplicationStatusEnum.REJECTED,
+        reject_reason: payload.reason,
+        verified: false
+      }
+    )
   }
 
   async approveVendor(vendorId: string) {
@@ -69,11 +72,29 @@ class VendorService {
       throw new BadRequestError('Only pending vendor can be approved')
     }
 
-    return this.vendorRepository.update(vendorId, {
-      status_application: VendorApplicationStatusEnum.APPROVED,
-      verified: true
-    })
+    return this.vendorRepository.update(
+      { _id: vendorId },
+      {
+        status_application: VendorApplicationStatusEnum.APPROVED,
+        verified: true
+      }
+    )
   }
+
+  //   async private function syncUserPermissions(userId) {
+  //   const user = await UserModel.findById(userId).populate("roles")
+
+  //   const permissions = new Set()
+
+  //   for (const role of user.roles) {
+  //     role.permissions.forEach(p => permissions.add(p))
+  //   }
+
+  //   user.permissions = [...permissions]
+
+  //   await user.save()
+
+  // }
 }
 
 export default VendorService

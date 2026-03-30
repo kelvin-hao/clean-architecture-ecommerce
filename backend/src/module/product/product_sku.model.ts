@@ -10,7 +10,7 @@ export interface IProductSKU extends Document {
   sku_code: string
   price?: number
   compare_at_price?: number
-  variationValues: VariationValue[]
+  variation_values: VariationValue[]
   is_active?: boolean
 }
 
@@ -32,7 +32,7 @@ const productSKUSchema = new Schema<IProductSKU>(
     price: { type: Number, required: true },
     compare_at_price: { type: Number, default: null },
 
-    variationValues: [
+    variation_values: [
       {
         name: String,
         value: String
