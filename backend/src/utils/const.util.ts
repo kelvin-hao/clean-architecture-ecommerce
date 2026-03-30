@@ -19,7 +19,10 @@ export const DATABASE_DOCUMENT = {
   ROLE: 'role',
   ORDER: 'order',
   INVENTORY: 'inventory',
-  PAYMENT: 'payment'
+  PAYMENT: 'payment',
+  NOTIFICATION: 'notification',
+  USER_NOTIFICATION: 'user_notification',
+  DISCOUNT: 'discount'
 }
 
 export const MAX_LEVEL_CATEGORY = 5
@@ -77,7 +80,7 @@ export const EMAIL_TEMPLATE_TWO_STEP_VERIFICATION = `<!DOCTYPE html>
 
               <p style="margin:0 0 20px;color:#555;font-size:15px;line-height:1.6;">
                 Use the verification code below to complete your login. This code is valid for
-                <strong>10 minutes</strong>.
+                <strong>5 minutes</strong>.
               </p>
 
               <!-- Code Box -->
@@ -103,7 +106,7 @@ export const EMAIL_TEMPLATE_TWO_STEP_VERIFICATION = `<!DOCTYPE html>
 
               <p style="margin:0;color:#333;font-size:14px;">
                 Best regards,<br />
-                <strong>Your Company Team</strong>
+                <strong>Ecommerce Company Team</strong>
               </p>
 
             </td>
@@ -207,7 +210,7 @@ export const EMAIL_TEMPLATE_RESET_PASSWORD = `<!DOCTYPE html>
 
               <p style="margin-top:24px;color:#333;font-size:14px;">
                 Best regards,<br />
-                <strong>Your Company Team</strong>
+                <strong>Ecommerce Company Team</strong>
               </p>
 
             </td>

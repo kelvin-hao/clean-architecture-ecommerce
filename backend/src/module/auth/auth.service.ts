@@ -15,7 +15,8 @@ import { ContainerInjectionRegistry } from '~/helper/injection/injectionManager'
 import {
   EMAIL_TEMPLATE_RESET_PASSWORD,
   EMAIL_TEMPLATE_TWO_STEP_VERIFICATION,
-  FIFTEN_MINUTES_IN_SECONDS
+  FIFTEN_MINUTES_IN_SECONDS,
+  ONE_MINUTES_IN_SECONDS
 } from '~/utils/const.util'
 import jsonWebToken from '~/helper/jwt'
 import { JwtPayload } from '~/types/type'
@@ -30,13 +31,12 @@ import {
   VerifyToken2FADTO
 } from './auth.dto'
 import { OAuth2Client } from 'google-auth-library'
-import { SEVEN_DAYS_IN_SECONDS, FIVE_MINUTES_IN_SECONDS, ONE_MINUTES_IN_SECONDS } from '~/utils/const.util'
+import { SEVEN_DAYS_IN_SECONDS } from '~/utils/const.util'
 import { randomBytes } from 'crypto'
 
 import env from '~/config/env/dotenv.config'
 import { verify } from 'otplib'
 import RoleRepository from '../rbac/role.repository'
-import { IRoleWithPermissions } from '../rbac/role.model'
 import { QueueManager, QueueName } from '~/helper/jobs/queueManager'
 import { JobType } from '~/helper/jobs/jobManager'
 
@@ -80,7 +80,7 @@ class AuthService {
     })
 
     // cache infor user and verification key to validate
-    await this.redisClient.set(verrificationKey, userData, 'EX', FIVE_MINUTES_IN_SECONDS)
+    await this.redisClient.set(verrificationKey, userData, 'EX', ONE_MINUTES_IN_SECONDS)
 
     // set up data send email
     const recipient = payload.email
@@ -107,7 +107,7 @@ class AuthService {
     ])
 
     return {
-      message: 'The verification code has beent sent and it will exprie in 5 minutes'
+      email: payload.email
     }
   }
 
@@ -124,25 +124,18 @@ class AuthService {
     if (existingUser) throw new ConflictError('User already existed')
 
     const userRole = await this.roleRepository.findOne({
-      name: 'User'
+      name: 'user'
     })
     if (!userRole) throw new BadRequestError('Something went wrong. Please try again')
 
-    const userRoleWithPermission = (await userRole?.populate('permissions')) as IRoleWithPermissions
-    const permissions = new Set<string>()
-
-    for (const perm of userRoleWithPermission.permissions) {
-      permissions.add(perm.key)
-    }
-
-    await this.userRepository.create({
+    const user = await this.userRepository.create({
       ...userData,
-      roles: [userRole._id],
-      permissions: [...permissions]
+      roles: [userRole.name],
+      permissions: userRole.permissions
     })
 
     return {
-      message: 'Verification is successful. Please login'
+      id: user._id
     }
   }
 
@@ -179,7 +172,7 @@ class AuthService {
 
       user = await this.userRepository.create({
         email: payload.email,
-        full_name: payload.name,
+        name: payload.name,
         avatar: {
           url: payload.picture!
         },
@@ -244,6 +237,7 @@ class AuthService {
 
     const jwtPayload: JwtPayload = {
       id: decodedToken.id,
+      roles: user.roles,
       sessionId: decodedToken.sessionId,
       permissions: user.permissions
     }
@@ -362,6 +356,7 @@ class AuthService {
     const jwtPayload: JwtPayload = {
       id: `${user._id}`,
       permissions: user.permissions,
+      roles: user.roles,
       sessionId
     }
 

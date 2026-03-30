@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength, IsPhoneNumber, IsJWT, MaxLength } from 'class-validator'
+import { IsEmail, IsNotEmpty, IsString, MinLength, IsJWT, MaxLength } from 'class-validator'
 import { BaseDto } from '~/helper'
 
 export class VerifyToken2FADTO extends BaseDto {
@@ -63,11 +63,11 @@ export class RefreshTokenDTO extends BaseDto {
 }
 
 export class RegisterDTO extends BaseDto {
-  @IsString({ message: 'Full name must be a string.' })
-  @IsNotEmpty({ message: 'Full name is required.' })
+  @IsString({ message: 'Name must be a string.' })
+  @IsNotEmpty({ message: 'Name is required.' })
   @MinLength(3, { message: 'Password must be at least 3 characters long' })
   @MaxLength(50, { message: 'Password must be at most 50 characters long' })
-  full_name: string
+  name: string
 
   @IsEmail({}, { message: 'Please provide a valid email address.' })
   @IsNotEmpty({ message: 'Email is required.' })
@@ -78,16 +78,16 @@ export class RegisterDTO extends BaseDto {
   @MaxLength(30, { message: 'Password must be at most 30 characters long' })
   @IsNotEmpty({ message: 'Password is required.' })
   password: string
-
-  @IsPhoneNumber('VN', { message: 'Please provide a valid phone number.' })
-  @IsNotEmpty({ message: 'Phone number is required.' })
-  phone_number: string
 }
 
-export class ParamsCodeDTO extends BaseDto {
-  @IsString({ message: 'Code must be a string.' })
-  @IsNotEmpty({ message: 'Code is required.' })
-  code: string
+export class VerifyOtpDto extends BaseDto {
+  @IsString({ message: 'Otp code must be a string.' })
+  @IsNotEmpty({ message: 'Otp code is required.' })
+  otp: string
+
+  @IsEmail({}, { message: 'Please provide a valid email address.' })
+  @IsNotEmpty({ message: 'Otp code is required.' })
+  email: number
 }
 
 export class IDParamsDTO extends BaseDto {

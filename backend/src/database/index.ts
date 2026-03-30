@@ -10,13 +10,13 @@ import { Client } from '@elastic/elasticsearch'
 export const initializeDatabase = async () => {
   databaseManager.register(ConnectionsEnum.MONGO, new MongooseConnection())
   databaseManager.register(ConnectionsEnum.REDIS, new RedisConnection())
-  databaseManager.register(ConnectionsEnum.ELASTICSEARCH, new ElasticsearchConnection())
+  // databaseManager.register(ConnectionsEnum.ELASTICSEARCH, new ElasticsearchConnection())
 
   try {
     await Promise.all([
       databaseManager.getConnection<MongooseType>(ConnectionsEnum.MONGO),
-      databaseManager.getConnection<Redis>(ConnectionsEnum.REDIS),
-      databaseManager.getConnection<Client>(ConnectionsEnum.ELASTICSEARCH)
+      databaseManager.getConnection<Redis>(ConnectionsEnum.REDIS)
+      // databaseManager.getConnection<Client>(ConnectionsEnum.ELASTICSEARCH)
     ])
   } catch (_) {
     throw new InternalServerError('Databases connection failed')

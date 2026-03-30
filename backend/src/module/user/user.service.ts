@@ -9,11 +9,10 @@ import { FIVE_MINUTES_IN_SECONDS } from '~/utils/const.util'
 import bcrypt from 'bcryptjs'
 import { generateSecret, generateURI } from 'otplib'
 import Qrcode from 'qrcode'
-import { IUser, IUserWithRoles } from './user.model'
+import { IUser } from './user.model'
 import fs from 'fs'
 import { validate } from 'class-validator'
 import RoleRepository from '../rbac/role.repository'
-import { IRoleWithPermissions } from '../rbac/role.model'
 import { parse } from 'fast-csv'
 
 @injectable()
@@ -58,9 +57,7 @@ class UserService {
     const user = await this.userRepository.findById(userId)
     if (!user) throw new BadRequestError('Can not get profile')
 
-    const userWithRole = (await user.populate('roles')) as IUserWithRoles
-
-    const safeUser = plainToInstance(ResponseUserDTO, userWithRole, {
+    const safeUser = plainToInstance(ResponseUserDTO, user, {
       excludeExtraneousValues: true
     })
 
@@ -128,12 +125,10 @@ class UserService {
     let inserted = 0
     let failed = 0
 
-    const userRole = await this.roleRepository.findOne({ name: 'User' })
+    const userRole = await this.roleRepository.findOne({ name: 'user' })
     if (!userRole) {
       throw new BadRequestError('Role User not found')
     }
-    const role = (await userRole.populate('permissions')) as IRoleWithPermissions
-    const permissions = role.permissions.map((p) => p.key)
 
     const existingUsers = await this.userRepository.getAllEmails()
     const emailSet = new Set(existingUsers)
@@ -145,9 +140,8 @@ class UserService {
         stream.pause()
         try {
           const rawData = {
-            full_name: row.full_name,
+            name: row.name,
             email: row.email,
-            phone_number: row.phone_number,
             avatar: row.avatar,
             password: row.password
           }
@@ -173,15 +167,14 @@ class UserService {
           const hashed = await bcrypt.hash(data.password, 10)
 
           batch.push({
-            full_name: data.full_name,
+            name: data.name,
             email: data.email,
-            phone_number: data.phone_number,
             avatar: {
               url: data.avatar
             },
             password: hashed,
-            roles: [userRole._id],
-            permissions
+            roles: [userRole.name],
+            permissions: userRole.permissions
           })
 
           emailSet.add(data.email)

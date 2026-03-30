@@ -47,7 +47,7 @@ class ProductService {
       const skusData = combinations.map((combo, _) => ({
         spu: spu._id,
         sku_code: generateSKUCode(spu._id.toString(), combo),
-        variationValues: combo,
+        variation_values: combo,
         price: payload.base_price
       }))
 

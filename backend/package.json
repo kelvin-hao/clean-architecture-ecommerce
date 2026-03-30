@@ -5,10 +5,11 @@
   "main": "index.js",
   "scripts": {
     "dev": "npx nodemon",
+    "generate:permissions": "tsx src/scripts/generate-permissions.ts",
+    "generate:roles": "tsx src/scripts/generate-roles.ts",
     "build": "rimraf ./dist && tsc && tsc-alias",
     "start": "node dist/index.js",
     "lint": "eslint .",
-    "lint-staged": "lint-staged",
     "lint:fix": "eslint . --fix",
     "prettier": "prettier --check .",
     "prettier:fix": "prettier --write .",

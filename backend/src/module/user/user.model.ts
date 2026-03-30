@@ -1,29 +1,23 @@
 import mongoose, { Document, Schema, Types } from 'mongoose'
 import { Image, UserStatusEnum } from '~/types/type'
 import { DATABASE_DOCUMENT, DEFAULT_AVATAR } from '~/utils/const.util'
-import { IRoleWithPermissions } from '../rbac/role.model'
 
 const USER_COLLECTION = 'users'
 
 export interface IUser extends Document {
   _id: Types.ObjectId
   email: string
-  roles: Types.ObjectId[]
+  roles: string[]
   permissions: string[]
   password: string
-  full_name: string
+  name: string
   is_delete: boolean
   status: UserStatusEnum
   avatar: Image
   two_FA: boolean
   two_FA_secret: string
-  phone_number: string
   createdAt: Date
   updatedAt: Date
-}
-
-export interface IUserWithRoles extends Omit<IUser, 'roles'> {
-  roles: IRoleWithPermissions[]
 }
 
 const UserSchema: Schema = new Schema<IUser>(
@@ -37,8 +31,7 @@ const UserSchema: Schema = new Schema<IUser>(
 
     roles: [
       {
-        type: Schema.Types.ObjectId,
-        ref: DATABASE_DOCUMENT.ROLE
+        type: String
       }
     ],
 
@@ -73,7 +66,7 @@ const UserSchema: Schema = new Schema<IUser>(
       select: false
     },
 
-    full_name: {
+    name: {
       type: String,
       required: true,
       trim: true
@@ -86,11 +79,6 @@ const UserSchema: Schema = new Schema<IUser>(
         default: DEFAULT_AVATAR
       },
       alt: String
-    },
-
-    phone_number: {
-      type: String,
-      trim: true
     },
 
     is_delete: {

@@ -72,8 +72,8 @@ const routeConfig = {
       },
 
       verifyRegister: {
-        path: '/verify-register/:code',
-        method: 'GET'
+        path: '/verify-otp',
+        method: 'POST'
       },
 
       refreshToken: {

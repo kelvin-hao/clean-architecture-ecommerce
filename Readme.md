@@ -118,28 +118,6 @@ PATCH /api/seller/skus/:id
 
 ---
 
-## 🧪 Testing
-
-Using:
-
-- Jest
-- Supertest
-- MongoDB Memory Server
-
-Run tests:
-
-```
-npm run test
-```
-
-Coverage:
-
-```
-npm run test:coverage
-```
-
----
-
 ## ⚙️ Environment Variables
 
 Create `.env` file:

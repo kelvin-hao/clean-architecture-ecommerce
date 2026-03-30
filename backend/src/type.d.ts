@@ -9,6 +9,7 @@ declare global {
       bodyValidated?: BaseDto
       queryValidated?: BaseDto
       paramsValidated?: BaseDto
+      resource?: { id: string }
     }
   }
 }

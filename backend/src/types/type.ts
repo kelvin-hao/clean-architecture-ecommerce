@@ -11,6 +11,7 @@ export type ConnectionStrategyType = MongooseType | Redis | Client
 export type JwtPayload = {
   id: string
   permissions: string[]
+  roles: string[]
   sessionId: string
 }
 
@@ -99,4 +100,21 @@ export enum VendorApplicationStatusEnum {
   PENDING = 'PENDING',
   APPROVED = 'APPROVED',
   REJECTED = 'REJECTED'
+}
+
+export enum NotifierType {
+  EMAIL = 'Email',
+  SMS = 'SMS',
+  IN_APP = 'IN_APP'
+}
+
+export enum DISCOUNT_TYPE {
+  FIX = 'fix',
+  percentage = 'percentage'
+}
+
+export enum DISCOUNT_APLY_TO {
+  ALL = 'all',
+  PRODUCT = 'product',
+  CATEGORY = 'category'
 }

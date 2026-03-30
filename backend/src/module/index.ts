@@ -3,7 +3,6 @@ import routeConfig from '~/config/route.config'
 import createUserRoute from './user/user.route'
 import { OKResponse } from '~/helper/response/successResponse'
 import createUploadRoute from './upload/upload.route'
-import createRBACRoute from './rbac/rbac.routes'
 import createAuthRoute from './auth/auth.route'
 import createCategoryRoute from './category/category.route'
 import createProductRoute from './product/product.route'
@@ -12,8 +11,7 @@ const createRoute = async (): Promise<Router> => {
   const router = express.Router()
   const uploadRoute = createUploadRoute()
 
-  const [rbacRoute, authRoute, userRoute, categoryRoute, productRoute] = await Promise.all([
-    createRBACRoute(),
+  const [authRoute, userRoute, categoryRoute, productRoute] = await Promise.all([
     createAuthRoute(),
     createUserRoute(),
     createCategoryRoute(),
@@ -30,7 +28,6 @@ const createRoute = async (): Promise<Router> => {
     }).send(req, res)
   })
   // API
-  router.use(routeConfig.rbac.path, rbacRoute)
   router.use(routeConfig.upload.path, uploadRoute)
   router.use(routeConfig.auth.path, authRoute)
   router.use(routeConfig.users.path, userRoute)
