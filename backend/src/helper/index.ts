@@ -45,7 +45,7 @@ export abstract class RepositoryBase<T extends Document> implements IRepositoryB
   }
 
   async findById(id: string): Promise<T | null> {
-    return this.model.findById({ _id: id, is_delete: false }).exec()
+    return this.model.findOne({ _id: id, is_delete: false } as FilterQuery<T>).exec()
   }
 
   async findOne(condition: FilterQuery<T>): Promise<T | null> {

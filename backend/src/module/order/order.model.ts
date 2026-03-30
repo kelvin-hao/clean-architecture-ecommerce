@@ -1,11 +1,11 @@
-import { DATABASE_DOCUMENT } from './../../utils/const.util'
-import mongoose, { Schema, Types } from 'mongoose'
-import { ORDER_STATUS } from '~/types/type'
+import mongoose, { Document, Schema, Types } from 'mongoose'
+import { ORDER_STATUS, PAYMENT_METHOD } from '~/types/type'
+import { DATABASE_DOCUMENT } from '~/utils/const.util'
 
 const ORDER_COLLECTION = 'orders'
-const ORDER_DOCUMENT = 'order'
+const ORDER_DOCUMENT = DATABASE_DOCUMENT.ORDER
 
-interface IOrderItem {
+export interface IOrderItem {
   product_spu: Types.ObjectId
   product_sku: Types.ObjectId
   name: string
@@ -22,58 +22,103 @@ export interface IOrder extends Document {
   total_price: number
   status: ORDER_STATUS
   shipping_address: string
+  payment_method: PAYMENT_METHOD
   isPaied: boolean
+  is_delete: boolean
 }
 
-const OrderItemSchema = new Schema<IOrder['items'][number]>({
-  product_spu: Schema.Types.ObjectId,
+const OrderItemSchema = new Schema<IOrderItem>(
+  {
+    product_spu: {
+      type: Schema.Types.ObjectId,
+      ref: DATABASE_DOCUMENT.PRODUCT_SPU,
+      required: true
+    },
 
-  product_sku: Schema.Types.ObjectId,
-  name: String,
+    product_sku: {
+      type: Schema.Types.ObjectId,
+      ref: DATABASE_DOCUMENT.PRODUCT_SKU,
+      required: true
+    },
 
-  image: String,
+    name: {
+      type: String,
+      required: true
+    },
 
-  price: {
-    Type: Number,
-    min: 0
+    image: {
+      type: String,
+      default: ''
+    },
+
+    price: {
+      type: Number,
+      min: 0,
+      required: true
+    },
+
+    quantity: {
+      type: Number,
+      min: 1,
+      required: true
+    },
+
+    total: {
+      type: Number,
+      min: 0,
+      required: true
+    }
   },
-
-  quantity: {
-    type: Number,
-    min: 1
-  },
-
-  total: {
-    type: Number,
-    min: 0
+  {
+    _id: false
   }
-})
+)
 
 const OrderSchema = new Schema<IOrder>(
   {
     user: {
       type: Schema.Types.ObjectId,
-      ref: DATABASE_DOCUMENT.USER
+      ref: DATABASE_DOCUMENT.USER,
+      required: true,
+      index: true
     },
 
-    items: [OrderItemSchema],
+    items: {
+      type: [OrderItemSchema],
+      default: []
+    },
 
     total_price: {
-      Type: Number,
-      min: 0
+      type: Number,
+      min: 0,
+      required: true,
+      default: 0
     },
 
     status: {
-      Type: String,
-      enum: ORDER_STATUS,
+      type: String,
+      enum: Object.values(ORDER_STATUS),
       default: ORDER_STATUS.PENDDING
     },
 
     shipping_address: {
-      Type: String
+      type: String,
+      required: true,
+      trim: true
+    },
+
+    payment_method: {
+      type: String,
+      enum: Object.values(PAYMENT_METHOD),
+      default: PAYMENT_METHOD.COD
     },
 
     isPaied: {
+      type: Boolean,
+      default: false
+    },
+
+    is_delete: {
       type: Boolean,
       default: false
     }

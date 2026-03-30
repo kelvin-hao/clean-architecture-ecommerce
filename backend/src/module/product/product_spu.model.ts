@@ -20,6 +20,7 @@ export interface IProductSPU extends Document {
   rating_average?: number
   rating_count?: number
   status?: ProductStatusEnum
+  is_delete?: boolean
 }
 
 const productSPUSchema = new Schema<IProductSPU>(
@@ -68,6 +69,11 @@ const productSPUSchema = new Schema<IProductSPU>(
 
     rating_average: { type: Number, default: 0 },
     rating_count: { type: Number, default: 0 },
+
+    is_delete: {
+      type: Boolean,
+      default: false
+    },
 
     status: {
       type: String,

@@ -28,6 +28,7 @@ import {
   LoginDTO,
   RefreshTokenDTO,
   ResetPasswordDTO,
+  VerifyOtpDto,
   VerifyToken2FADTO
 } from './auth.dto'
 import { OAuth2Client } from 'google-auth-library'
@@ -60,64 +61,44 @@ class AuthService {
   }
 
   async signUp(payload: RegisterDTO) {
-    // Only register once per minute
-    const rateLimitKey = `register-rate-limit:${payload.email}`
-    if (await this.redisClient.get(rateLimitKey)) throw new TooManyRequest('Too many requests. Please try again later')
-
-    // user already existed
     const existingUser = await this.userRepository.findByEmail(payload.email)
     if (existingUser) throw new ConflictError('User already existed')
 
-    // hash password
     const hashPassword = bcrypt.hashSync(payload.password, SALT_NUMBER)
-
-    // prepare infor for 2FA send email
-    const verificationToken = generateVerificationToken()
-    const verrificationKey = `verification-token:${verificationToken}`
     const userData = JSON.stringify({
       ...payload,
+      email: payload.email.trim().toLowerCase(),
       password: hashPassword
     })
 
-    // cache infor user and verification key to validate
-    await this.redisClient.set(verrificationKey, userData, 'EX', ONE_MINUTES_IN_SECONDS)
-
-    // set up data send email
-    const recipient = payload.email
-    const subject = EMAIL_REGISTRATION_SUBJECT
-    const holder = {
-      verification_code: verificationToken
-    }
-    const htmlRegistrationTemplate = EMAIL_TEMPLATE_TWO_STEP_VERIFICATION
-
-    const emailQueue = await QueueManager.getQueue(QueueName.EMAIL)
-
-    // send email
-    await Promise.all([
-      await emailQueue.add(JobType.SEND_EMAIL, {
-        payload: {
-          recipient,
-          message: htmlRegistrationTemplate,
-          holder,
-          subject
-        }
-      }),
-
-      this.redisClient.set(rateLimitKey, 'true', 'EX', ONE_MINUTES_IN_SECONDS)
-    ])
-
-    return {
-      email: payload.email
-    }
+    return this.sendVerificationOtp(payload.email, userData)
   }
 
-  async verificationToken(verificationToken: string) {
-    const verificationKey = `verification-token:${verificationToken}`
+  async resendOtp(email: string) {
+    const normalizedEmail = email.trim().toLowerCase()
+    const existingUser = await this.userRepository.findByEmail(normalizedEmail)
+
+    if (existingUser) throw new ConflictError('User already existed')
+
+    const pendingRegistrationKey = `pending-registration:${normalizedEmail}`
+    const userDataJSON = await this.redisClient.get(pendingRegistrationKey)
+
+    if (!userDataJSON) {
+      throw new BadRequestError('Registration session expired. Please sign up again')
+    }
+
+    return this.sendVerificationOtp(normalizedEmail, userDataJSON)
+  }
+
+  async verificationToken({ otp, email }: VerifyOtpDto) {
+    const normalizedEmail = email.trim().toLowerCase()
+    const verificationKey = `verification-token:${normalizedEmail}:${otp}`
+    const pendingRegistrationKey = `pending-registration:${normalizedEmail}`
     const userDataJSON = await this.redisClient.get(verificationKey)
 
-    if (!userDataJSON) throw new BadRequestError('Verification token is expired or wrong ')
+    if (!userDataJSON) throw new BadRequestError('Verification token is expired or wrong')
 
-    await this.redisClient.del(verificationKey)
+    await Promise.all([this.redisClient.del(verificationKey), this.redisClient.del(pendingRegistrationKey)])
 
     const userData = JSON.parse(userDataJSON) as RegisterDTO
     const existingUser = await this.userRepository.findByEmail(userData.email)
@@ -342,6 +323,41 @@ class AuthService {
 
     return {
       userId
+    }
+  }
+
+  private async sendVerificationOtp(email: string, userData: string) {
+    const normalizedEmail = email.trim().toLowerCase()
+    const rateLimitKey = `register-rate-limit:${normalizedEmail}`
+
+    if (await this.redisClient.get(rateLimitKey)) {
+      throw new TooManyRequest('Too many requests. Please try again later')
+    }
+
+    const verificationToken = generateVerificationToken()
+    const verificationKey = `verification-token:${normalizedEmail}:${verificationToken}`
+    const pendingRegistrationKey = `pending-registration:${normalizedEmail}`
+    const emailQueue = await QueueManager.getQueue(QueueName.EMAIL)
+
+    await Promise.all([
+      this.redisClient.set(verificationKey, userData, 'EX', ONE_MINUTES_IN_SECONDS),
+      this.redisClient.set(pendingRegistrationKey, userData, 'EX', FIFTEN_MINUTES_IN_SECONDS),
+      this.redisClient.set(rateLimitKey, 'true', 'EX', ONE_MINUTES_IN_SECONDS),
+      emailQueue.add(JobType.SEND_EMAIL, {
+        payload: {
+          recipient: normalizedEmail,
+          message: EMAIL_TEMPLATE_TWO_STEP_VERIFICATION,
+          holder: {
+            verification_code: verificationToken
+          },
+          subject: EMAIL_REGISTRATION_SUBJECT
+        }
+      })
+    ])
+
+    return {
+      email: normalizedEmail,
+      expiredIn: ONE_MINUTES_IN_SECONDS
     }
   }
 

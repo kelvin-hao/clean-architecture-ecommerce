@@ -110,10 +110,10 @@ export enum NotifierType {
 
 export enum DISCOUNT_TYPE {
   FIX = 'fix',
-  percentage = 'percentage'
+  PERCENT = 'percentage'
 }
 
-export enum DISCOUNT_APLY_TO {
+export enum DISCOUNT_APPLY_TO {
   ALL = 'all',
   PRODUCT = 'product',
   CATEGORY = 'category'

@@ -19,8 +19,7 @@ class CategoryService {
   async createCategory(payload: CreateCategoryDTO) {
     const { name, slug, parentId } = payload
 
-    const finalSlug = slug || slugify(name)
-
+    const finalSlug = slugify(slug || name)
     const existedSlug = await this.categoryRepository.findBySlug(finalSlug)
 
     if (existedSlug) throw new BadRequestError('Name or slug already exist')
@@ -42,13 +41,27 @@ class CategoryService {
       name,
       slug: finalSlug,
       parent: parentId ? convertToObjectId(parentId) : undefined,
-      path: paths.length !== 0 ? paths : [],
-      level
+      path: paths,
+      level,
+      is_delete: false,
+      isActive: true
     })
 
+    await this.clearCategoryCache()
+
     return {
-      _id: data._id
+      id: data._id
     }
+  }
+
+  async getCategoryById(categoryID: string) {
+    const category = await this.categoryRepository.findById(categoryID)
+
+    if (!category) throw new BadRequestError('Category not found')
+
+    return plainToInstance(CategoryResponseDTO, category, {
+      excludeExtraneousValues: true
+    })
   }
 
   async getCategories() {
@@ -71,37 +84,57 @@ class CategoryService {
     const category = await this.categoryRepository.findById(categoryID)
     if (!category) throw new BadRequestError('Category not found')
 
-    let newPath = category.path
-    let newLevel = category.level
+    const updateData: {
+      name?: string
+      slug?: string
+      parent?: Types.ObjectId
+      path?: Types.ObjectId[]
+      level?: number
+    } = {}
+
+    if (payload.name) {
+      updateData.name = payload.name
+    }
+
+    const nextSlug = payload.slug ? slugify(payload.slug) : category.slug
+    if (nextSlug !== category.slug) {
+      const existedSlug = await this.categoryRepository.findBySlug(nextSlug)
+      if (existedSlug && existedSlug._id.toString() !== categoryID) {
+        throw new BadRequestError('Slug already exists')
+      }
+      updateData.slug = nextSlug
+    }
 
     if (payload.parent && payload.parent !== category.parent?.toString()) {
+      if (payload.parent === categoryID) {
+        throw new BadRequestError('Category cannot be its own parent')
+      }
+
       const newParent = await this.categoryRepository.findById(payload.parent)
       if (!newParent) throw new BadRequestError('Parent category not found')
 
-      newPath = [...newParent.path, newParent._id]
-      newLevel = newParent.level + 1
-      const data = {
-        name: payload.name,
-        parent: convertToObjectId(payload.parent),
-        path: newPath,
-        level: newLevel
+      if (newParent.path.some((id) => id.toString() === categoryID)) {
+        throw new BadRequestError('Cannot move category inside its child')
       }
 
-      const [_, res] = await Promise.all([
-        await this.updateChildrenPath(category._id, newPath),
-        await this.categoryRepository.update({ _id: categoryID }, data)
-      ])
+      const newPath = [...newParent.path, newParent._id]
+      const newLevel = newParent.level + 1
 
-      if (!res?._id) throw new BadRequestError('Something went wrong')
+      if (newLevel > MAX_LEVEL_CATEGORY) throw new BadRequestError('Too deep')
+
+      updateData.parent = convertToObjectId(payload.parent)
+      updateData.path = newPath
+      updateData.level = newLevel
     }
 
-    const res = await this.categoryRepository.update(
-      { _id: categoryID },
-      {
-        name: payload.name
-      }
-    )
+    const res = await this.categoryRepository.update({ _id: categoryID }, updateData)
     if (!res?._id) throw new BadRequestError('Something went wrong')
+
+    if (updateData.path) {
+      await this.updateChildrenPath(category._id, updateData.path)
+    }
+
+    await this.clearCategoryCache()
 
     return {
       id: res._id
@@ -109,15 +142,31 @@ class CategoryService {
   }
 
   async deleteCategory(categoryID: string) {
+    const category = await this.categoryRepository.findById(categoryID)
+    if (!category) throw new BadRequestError('Category not found')
+
     const childrens = await this.categoryRepository.findChildren(categoryID)
 
-    if (childrens && childrens.length > 0) {
+    if (childrens.length > 0) {
       throw new BadRequestError('Cannot delete category with children')
     }
 
-    // soft delete here
-  }
+    const deleted = await this.categoryRepository.update(
+      { _id: categoryID },
+      {
+        is_delete: true,
+        isActive: false
+      }
+    )
 
+    if (!deleted?._id) throw new BadRequestError('Something went wrong')
+
+    await this.clearCategoryCache()
+
+    return {
+      id: deleted._id
+    }
+  }
   private async getTree() {
     const categories = await this.categoryRepository.findAll()
 
@@ -166,6 +215,10 @@ class CategoryService {
 
       await this.updateChildrenPath(child._id, newPath)
     }
+  }
+
+  private async clearCategoryCache() {
+    await this.redisClient.del('category:tree')
   }
 }
 

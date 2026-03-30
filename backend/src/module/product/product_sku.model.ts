@@ -12,6 +12,7 @@ export interface IProductSKU extends Document {
   compare_at_price?: number
   variation_values: VariationValue[]
   is_active?: boolean
+  is_delete?: boolean
 }
 
 const productSKUSchema = new Schema<IProductSKU>(
@@ -42,6 +43,11 @@ const productSKUSchema = new Schema<IProductSKU>(
     is_active: {
       type: Boolean,
       default: true
+    },
+
+    is_delete: {
+      type: Boolean,
+      default: false
     }
   },
   {

@@ -21,8 +21,13 @@ class CartRepository {
   async setItem(userID: string, sku_id: string, quantity: number) {
     const key = this.getKey(userID)
 
-    if (quantity <= 0) await this.redisClient.hdel(key)
-    else await this.redisClient.hset(key, sku_id, quantity)
+    if (quantity <= 0) {
+      await this.redisClient.hdel(key, sku_id)
+      return
+    }
+
+    await this.redisClient.hset(key, sku_id, quantity)
+    await this.redisClient.expire(key, ONE_DAYS_IN_SECONDS)
   }
 
   async removeItem(userID: string, sku_id: string) {

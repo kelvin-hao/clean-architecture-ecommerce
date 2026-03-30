@@ -1,33 +1,35 @@
-import mongoose, { Schema, Types } from 'mongoose'
+import mongoose, { Document, Schema, Types } from 'mongoose'
 import { PAYMENT_METHOD, PAYMENT_STATUS } from '~/types/type'
 import { DATABASE_DOCUMENT } from '~/utils/const.util'
 
 const PAYMENT_COLLECTION = 'payments'
+
 export interface IPayment extends Document {
   _id: Types.ObjectId
-
   orderId: Types.ObjectId
-
   amount: number
-
   method: PAYMENT_METHOD
-
-  stauts: PAYMENT_STATUS
+  status: PAYMENT_STATUS
+  failure_reason?: string
+  paid_at?: Date
 }
 
 const paymentSchema = new Schema<IPayment>(
   {
     orderId: {
       type: Schema.Types.ObjectId,
-      ref: DATABASE_DOCUMENT.ORDER
+      ref: DATABASE_DOCUMENT.ORDER,
+      index: true,
+      required: true
     },
 
     amount: {
       type: Number,
-      default: 0
+      default: 0,
+      min: 0
     },
 
-    stauts: {
+    status: {
       type: String,
       enum: PAYMENT_STATUS,
       default: PAYMENT_STATUS.PENDING
@@ -37,6 +39,16 @@ const paymentSchema = new Schema<IPayment>(
       type: String,
       enum: PAYMENT_METHOD,
       default: PAYMENT_METHOD.COD
+    },
+
+    failure_reason: {
+      type: String,
+      default: null
+    },
+
+    paid_at: {
+      type: Date,
+      default: null
     }
   },
   {

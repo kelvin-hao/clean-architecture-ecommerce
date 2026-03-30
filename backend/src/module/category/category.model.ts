@@ -13,6 +13,7 @@ export interface ICategory extends Document {
   level: number // 0 root, 1 child
   path: Types.ObjectId[] // full path for query
   isActive: boolean
+  is_delete: boolean
 }
 
 const categorySchema = new Schema<ICategory>(
@@ -31,7 +32,9 @@ const categorySchema = new Schema<ICategory>(
 
     path: [{ type: Schema.Types.ObjectId, ref: CATEGORY_COLLECTION }],
 
-    isActive: { type: Boolean, default: true }
+    isActive: { type: Boolean, default: true },
+
+    is_delete: { type: Boolean, default: false }
   },
   {
     timestamps: true,

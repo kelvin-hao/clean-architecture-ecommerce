@@ -1,10 +1,24 @@
-import { Exclude, Expose, Type } from 'class-transformer'
-import { IsArray, IsEnum, IsInt, IsNumber, IsOptional, IsString, Min } from 'class-validator'
+import { Exclude, Expose, Transform, Type } from 'class-transformer'
+import {
+  ArrayMinSize,
+  IsArray,
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsMongoId,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+  ValidateNested
+} from 'class-validator'
 import { BaseDto, BaseExposeDto, BaseQueryDto } from '~/helper'
-import { Image, ProductAttribute, ProductStatusEnum, VariationOption } from '~/types/type'
+import { Image, ProductAttribute, ProductStatusEnum, VariationOption, VariationValue } from '~/types/type'
 
 export class CreateProductSPUDto extends BaseDto {
   @IsString()
+  @IsNotEmpty()
   name: string
 
   @IsOptional()
@@ -22,27 +36,125 @@ export class CreateProductSPUDto extends BaseDto {
   @IsArray()
   images: Image[]
 
-  @IsString()
+  @IsMongoId()
   vendor: string
 
-  @IsString()
+  @IsMongoId()
   category: string
 
   @IsOptional()
   @IsArray()
-  attributes: ProductAttribute[]
+  attributes?: ProductAttribute[]
 
   @IsOptional()
+  @IsArray()
   variationOptions?: VariationOption[]
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
+  @Min(0)
   base_price?: number
+}
+
+export class UpdateProductSPUDto extends BaseDto {
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  name?: string
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  slug?: string
+
+  @IsOptional()
+  @IsString()
+  short_description?: string
+
+  @IsOptional()
+  @IsString()
+  description?: string
+
+  @IsOptional()
+  @IsString()
+  brand?: string
+
+  @IsOptional()
+  @IsArray()
+  images?: Image[]
+
+  @IsOptional()
+  @IsMongoId()
+  vendor?: string
+
+  @IsOptional()
+  @IsMongoId()
+  category?: string
+
+  @IsOptional()
+  @IsArray()
+  attributes?: ProductAttribute[]
+
+  @IsOptional()
+  @IsArray()
+  variationOptions?: VariationOption[]
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  base_price?: number
+
+  @IsOptional()
+  @IsEnum(ProductStatusEnum)
+  status?: ProductStatusEnum
+}
+
+export class ProductIdParamDto extends BaseDto {
+  @IsMongoId()
+  id: string
+}
+
+export class ProductSkuIdParamDto extends BaseDto {
+  @IsMongoId()
+  skuId: string
+}
+
+export class UpdateProductSKUDto extends BaseDto {
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  price?: number
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  compare_at_price?: number
+
+  @IsOptional()
+  @IsBoolean()
+  is_active?: boolean
+}
+
+export class BulkUpdateProductSKUItemDto extends UpdateProductSKUDto {
+  @IsMongoId()
+  sku_id: string
+}
+
+export class BulkUpdateProductSKUDto extends BaseDto {
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => BulkUpdateProductSKUItemDto)
+  skus: BulkUpdateProductSKUItemDto[]
 }
 
 export class ProductQueryDto extends BaseQueryDto {
   @IsOptional()
-  @IsString()
+  @IsMongoId()
   category?: string
 
   @IsOptional()
@@ -65,8 +177,6 @@ export class ProductQueryDto extends BaseQueryDto {
   @IsEnum(ProductStatusEnum)
   status?: ProductStatusEnum
 }
-
-// Product response
 
 export class ImageResponseDto {
   @Expose()
@@ -92,6 +202,23 @@ export class AttributeResponseDto {
   value: string
 }
 
+export class ProductSKUResponseDto extends BaseExposeDto {
+  @Expose()
+  sku_code: string
+
+  @Expose()
+  price?: number
+
+  @Expose()
+  compare_at_price?: number
+
+  @Expose()
+  variation_values: VariationValue[]
+
+  @Expose()
+  is_active?: boolean
+}
+
 @Exclude()
 export class ProductResponseDto extends BaseExposeDto {
   @Expose()
@@ -107,12 +234,14 @@ export class ProductResponseDto extends BaseExposeDto {
   short_description?: string
 
   @Expose()
+  @Transform((params) => params.obj.category?.toString?.() ?? params.obj.category ?? null)
   category: string
 
   @Expose()
   brand?: string
 
   @Expose()
+  @Transform((params) => params.obj.vendor?.toString?.() ?? params.obj.vendor ?? null)
   vendor: string
 
   @Expose()
@@ -138,4 +267,11 @@ export class ProductResponseDto extends BaseExposeDto {
 
   @Expose()
   status: string
+}
+
+@Exclude()
+export class ProductDetailResponseDto extends ProductResponseDto {
+  @Expose()
+  @Type(() => ProductSKUResponseDto)
+  skus: ProductSKUResponseDto[]
 }

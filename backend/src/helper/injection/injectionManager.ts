@@ -62,9 +62,41 @@ export const ContainerInjectionRegistry = {
 
   ProductController: Symbol.for('ProductController'),
 
+  CartRepository: Symbol.for('CartRepository'),
+
+  CartService: Symbol.for('CartService'),
+
+  CartController: Symbol.for('CartController'),
+
+  InventoryModel: Symbol.for('InventoryModel'),
+
+  InventoryRepository: Symbol.for('InventoryRepository'),
+
+  InventoryService: Symbol.for('InventoryService'),
+
+  InventoryController: Symbol.for('InventoryController'),
+
+  OrderModel: Symbol.for('OrderModel'),
+
+  OrderRepository: Symbol.for('OrderRepository'),
+
+  OrderService: Symbol.for('OrderService'),
+
+  OrderController: Symbol.for('OrderController'),
+
+  PaymentModel: Symbol.for('PaymentModel'),
+
+  PaymentRepository: Symbol.for('PaymentRepository'),
+
+  PaymentService: Symbol.for('PaymentService'),
+
+  PaymentController: Symbol.for('PaymentController'),
+
   DiscountModel: Symbol.for('DiscountModel'),
 
   DiscountRepository: Symbol.for('DiscountRepository'),
+
+  DiscountController: Symbol.for('DiscountController'),
 
   DiscountService: Symbol.for('DiscountService')
 }

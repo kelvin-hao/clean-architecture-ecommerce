@@ -10,6 +10,7 @@ import {
   LoginDTO,
   RefreshTokenDTO,
   ResetPasswordDTO,
+  SendOtpDTO,
   VerifyToken2FADTO,
   VerifyOtpDto
 } from './auth.dto'
@@ -29,10 +30,17 @@ class AuthController {
   }
 
   async verificationToken(req: Request, res: Response) {
-    const { otp } = req.bodyValidated as VerifyOtpDto
-    const data = await this.authService.verificationToken(otp)
+    const payload = req.bodyValidated as VerifyOtpDto
+    const data = await this.authService.verificationToken(payload)
 
     return new CreatedResponse(data).send(req, res)
+  }
+
+  async resendOtp(req: Request, res: Response) {
+    const { email } = req.bodyValidated as SendOtpDTO
+    const data = await this.authService.resendOtp(email)
+
+    return new OKResponse(data).send(req, res)
   }
 
   async signin(req: Request, res: Response) {

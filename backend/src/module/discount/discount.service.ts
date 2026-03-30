@@ -20,10 +20,12 @@ class DiscountService {
 
     return this.discountRepository.create({
       ...payload,
+      code: payload.code.trim().toUpperCase(),
       vendor: convertToObjectId(payload.vendor),
       category_ids: payload.category_ids?.map((c) => convertToObjectId(c)),
       product_ids: payload.product_ids?.map((p) => convertToObjectId(p)),
-      used_count: 0
+      used_count: 0,
+      user_usage: []
     })
   }
 
@@ -63,8 +65,8 @@ class DiscountService {
 
     const discountAmount = this.calculateDiscount(discount, orderValue)
 
-    // 🔥 update usage (IMPORTANT: should move to Redis later)
-    // await this.discountRepository.incrementUsedCount(discount._id)
+    // update usage counters
+    await this.discountRepository.incrementUsedCount(discount._id, userId)
 
     return {
       discountAmount,
@@ -100,7 +102,8 @@ class DiscountService {
 
     // 🔥 product validation
     if (discount.apply_to === DISCOUNT_APPLY_TO.PRODUCT) {
-      const valid = products.some((p) => discount.product_ids.includes(convertToObjectId(p.product_id)))
+      const discountProductIds = (discount.product_ids ?? []).map((id) => id.toString())
+      const valid = products.some((product) => discountProductIds.includes(product.product_id))
 
       if (!valid) throw new BadRequestError('Discount not applicable to products')
     }
@@ -109,7 +112,7 @@ class DiscountService {
   private calculateDiscount(discount: IDiscount, orderValue: number) {
     let discountAmount = 0
 
-    if (discount.type === DISCOUNT_TYPE.FIX) {
+    if (discount.type === DISCOUNT_TYPE.PERCENT) {
       discountAmount = orderValue * (discount.value / 100)
 
       if (discount.max_discount_value) {

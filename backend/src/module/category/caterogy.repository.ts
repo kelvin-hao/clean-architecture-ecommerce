@@ -16,7 +16,7 @@ class CategoryRepository extends RepositoryBase<ICategory> implements ICategoryR
   }
 
   async findBySlug(slug: string) {
-    return await this.model.findOne({ slug })
+    return await this.model.findOne({ slug, is_delete: false }).exec()
   }
 
   async findChildren(parentID: string): Promise<ICategory[] | []> {

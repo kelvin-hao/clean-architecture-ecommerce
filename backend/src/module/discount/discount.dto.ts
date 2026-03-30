@@ -15,7 +15,7 @@ import {
 import { BaseDto } from '~/helper'
 import { DISCOUNT_APPLY_TO, DISCOUNT_TYPE } from '~/types/type'
 
-export class CreateDiscountValidator extends BaseDto {
+export class CreateDiscountDto extends BaseDto {
   @IsMongoId()
   vendor: string
 
@@ -92,7 +92,7 @@ export class UpdateDiscountDto {
   // repeat only needed fields
 }
 
-class ProductItemDto {
+export class ProductItemDto {
   @IsMongoId()
   product_id: string
 
@@ -112,8 +112,9 @@ export class ApplyDiscountDto {
   @IsNotEmpty()
   code: string
 
+  @IsOptional()
   @IsMongoId()
-  userId: string
+  userId?: string
 
   @Type(() => Number)
   @IsNumber()
@@ -140,4 +141,14 @@ export class GetAvailableDiscountDto {
   @IsNumber()
   @Min(0)
   orderValue: number
+}
+
+export class DiscountIdParamDto extends BaseDto {
+  @IsMongoId()
+  id: string
+}
+
+export class VendorDiscountParamsDto extends BaseDto {
+  @IsMongoId()
+  vendorId: string
 }

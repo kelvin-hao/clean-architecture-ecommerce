@@ -70,9 +70,13 @@ export interface IDiscount extends Document {
   apply_to: DISCOUNT_APPLY_TO
   max_uses_per_user: number
   used_count: number
-  max_discount_value: number
+  max_discount_value?: number
   product_ids: Types.ObjectId[]
   category_ids: Types.ObjectId[]
+  user_usage?: Array<{
+    user_id: Types.ObjectId
+    used_count: number
+  }>
   start_date: Date
   end_date: Date
   min_order_value: number

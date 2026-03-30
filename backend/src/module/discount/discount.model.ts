@@ -35,6 +35,11 @@ const discountSchema = new Schema<IDiscount>(
       required: true
     },
 
+    max_discount_value: {
+      type: Number,
+      default: 0
+    },
+
     min_order_value: {
       type: Number,
       default: 0
@@ -55,6 +60,21 @@ const discountSchema = new Schema<IDiscount>(
       type: Number,
       default: 1
     },
+
+    user_usage: [
+      {
+        _id: false,
+        user_id: {
+          type: Schema.Types.ObjectId,
+          ref: DATABASE_DOCUMENT.USER,
+          required: true
+        },
+        used_count: {
+          type: Number,
+          default: 1
+        }
+      }
+    ],
 
     apply_to: {
       type: String,

@@ -80,14 +80,20 @@ export class RegisterDTO extends BaseDto {
   password: string
 }
 
+export class SendOtpDTO extends BaseDto {
+  @IsEmail({}, { message: 'Please provide a valid email address.' })
+  @IsNotEmpty({ message: 'Email is required.' })
+  email: string
+}
+
 export class VerifyOtpDto extends BaseDto {
   @IsString({ message: 'Otp code must be a string.' })
   @IsNotEmpty({ message: 'Otp code is required.' })
   otp: string
 
   @IsEmail({}, { message: 'Please provide a valid email address.' })
-  @IsNotEmpty({ message: 'Otp code is required.' })
-  email: number
+  @IsNotEmpty({ message: 'Email is required.' })
+  email: string
 }
 
 export class IDParamsDTO extends BaseDto {

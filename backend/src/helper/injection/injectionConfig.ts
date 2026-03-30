@@ -2,7 +2,7 @@ import { Container } from 'inversify'
 import UserController from '~/module/user/user.controller'
 import UserModel from '~/module/user/user.model'
 import UserRepository from '~/module/user/user.repository'
-import { elasticSearchProvider, redisProvider } from '~/database'
+import { redisProvider } from '~/database'
 import { ContainerInjectionRegistry } from './injectionManager'
 import UserService from '~/module/user/user.service'
 import UploadService from '~/module/upload/upload.service'
@@ -26,8 +26,25 @@ import VendorService from '~/module/vendor/vendor.service'
 import VendorController from '~/module/vendor/vendor.controller'
 import ProductService from '~/module/product/product.service'
 import ProductController from '~/module/product/product.controller'
+import CartRepository from '~/module/cart/cart.repository'
+import CartService from '~/module/cart/cart.service'
+import CartController from '~/module/cart/cart.controller'
+import inventoryModel from '~/module/inventory/inventory.model'
+import InventoryRepository from '~/module/inventory/inventory.repository'
+import InventoryService from '~/module/inventory/inventory.service'
+import InventoryController from '~/module/inventory/inventory.controller'
 import discountModel from '~/module/discount/discount.model'
 import DiscountRepository from '~/module/discount/discount.repository'
+import DiscountService from '~/module/discount/discount.service'
+import DiscountController from '~/module/discount/discount.controller'
+import paymentModel from '~/module/payment/payment.model'
+import PaymentRepository from '~/module/payment/payment.repository'
+import PaymentService from '~/module/payment/payment.service'
+import PaymentController from '~/module/payment/payment.controller'
+import OrderModel from '~/module/order/order.model'
+import OrderRepository from '~/module/order/order.repository'
+import OrderService from '~/module/order/order.service'
+import OrderController from '~/module/order/order.controller'
 
 export function configureContainer(): Container {
   const container = new Container()
@@ -86,9 +103,43 @@ export function configureContainer(): Container {
 
   container.bind(ContainerInjectionRegistry.ProductController).to(ProductController).inSingletonScope()
 
+  container.bind(ContainerInjectionRegistry.CartRepository).to(CartRepository).inSingletonScope()
+
+  container.bind(ContainerInjectionRegistry.CartService).to(CartService).inSingletonScope()
+
+  container.bind(ContainerInjectionRegistry.CartController).to(CartController).inSingletonScope()
+
+  container.bind(ContainerInjectionRegistry.InventoryModel).toConstantValue(inventoryModel)
+
+  container.bind(ContainerInjectionRegistry.InventoryRepository).to(InventoryRepository).inSingletonScope()
+
+  container.bind(ContainerInjectionRegistry.InventoryService).to(InventoryService).inSingletonScope()
+
+  container.bind(ContainerInjectionRegistry.InventoryController).to(InventoryController).inSingletonScope()
+
+  container.bind(ContainerInjectionRegistry.OrderModel).toConstantValue(OrderModel)
+
+  container.bind(ContainerInjectionRegistry.OrderRepository).to(OrderRepository).inSingletonScope()
+
+  container.bind(ContainerInjectionRegistry.OrderService).to(OrderService).inSingletonScope()
+
+  container.bind(ContainerInjectionRegistry.OrderController).to(OrderController).inSingletonScope()
+
+  container.bind(ContainerInjectionRegistry.PaymentModel).toConstantValue(paymentModel)
+
+  container.bind(ContainerInjectionRegistry.PaymentRepository).to(PaymentRepository).inSingletonScope()
+
+  container.bind(ContainerInjectionRegistry.PaymentService).to(PaymentService).inSingletonScope()
+
+  container.bind(ContainerInjectionRegistry.PaymentController).to(PaymentController).inSingletonScope()
+
   container.bind(ContainerInjectionRegistry.DiscountModel).toConstantValue(discountModel)
 
   container.bind(ContainerInjectionRegistry.DiscountRepository).to(DiscountRepository).inSingletonScope()
+
+  container.bind(ContainerInjectionRegistry.DiscountService).to(DiscountService).inSingletonScope()
+
+  container.bind(ContainerInjectionRegistry.DiscountController).to(DiscountController).inSingletonScope()
 
   return container
 }

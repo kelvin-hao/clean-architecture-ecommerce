@@ -13,6 +13,7 @@ import {
   ResetPasswordDTO,
   VerifyToken2FADTO,
   GoogleLoginDTO,
+  SendOtpDTO,
   VerifyOtpDto
 } from './auth.dto'
 import isAuth from '~/middleware/isAuth.mid'
@@ -78,6 +79,13 @@ const createAuthRoute = async (): Promise<Router> => {
     .post(
       validationInput(ResetPasswordDTO, RequestPartEnum.BODY),
       catchErrorHandler(AuthController.resetPassword.bind(AuthController))
+    )
+
+  authRoute
+    .route(routeConfig.auth.child.sendOtp.path)
+    .post(
+      validationInput(SendOtpDTO, RequestPartEnum.BODY),
+      catchErrorHandler(AuthController.resendOtp.bind(AuthController))
     )
 
   authRoute

@@ -14,16 +14,23 @@ export interface IInventory extends Document {
   available: number
 
   sold: number
+  is_delete: boolean
 }
 
 const inventorySchema = new Schema<IInventory>(
   {
     skuId: {
       type: Schema.Types.ObjectId,
-      ref: DATABASE_DOCUMENT.PRODUCT_SKU
+      ref: DATABASE_DOCUMENT.PRODUCT_SKU,
+      required: true,
+      unique: true,
+      index: true
     },
 
-    location: String,
+    location: {
+      type: String,
+      default: 'default'
+    },
 
     stock: {
       type: Number,
@@ -38,6 +45,16 @@ const inventorySchema = new Schema<IInventory>(
     available: {
       type: Number,
       default: 0
+    },
+
+    sold: {
+      type: Number,
+      default: 0
+    },
+
+    is_delete: {
+      type: Boolean,
+      default: false
     }
   },
   {
