@@ -1,174 +1,224 @@
-# 🛒 E-commerce Backend (Node.js + TypeScript)
+# E-Commerce Platform
 
-## 📌 Overview
+A full-stack e-commerce workspace with a **Node.js + Express + TypeScript backend** and a **React + Vite frontend**.
 
-This project is a scalable e-commerce backend system built with:
+It is organized as a monorepo and currently covers the core commerce flow:
 
-- Node.js + Express
-- TypeScript
-- MongoDB (Mongoose)
-- Redis (caching & queue)
-- Elasticsearch (search)
-
-It supports:
-
-- Authentication & Authorization (JWT)
-- Role-based access (Admin / Seller / Customer)
-- Seller onboarding system
-- Product (SPU / SKU)
-- Inventory management
+- 🔐 Authentication with JWT, refresh token, Google login, OTP verification, and resend OTP
+- 👤 User and role-based access control
+- 🏪 Vendor onboarding and management
+- 🗂️ Category management
+- 📦 Product SPU / SKU flow
+- 📊 Inventory tracking and stock reservation
+- 🛒 Cart management with Redis
+- 🎟️ Discount and coupon support
+- 📋 Order creation flow
+- 💵 COD-only payment flow
 
 ---
 
-## 🏗️ Architecture
+## 🧱 Project Structure
 
+```text
+ecommerce/
+├── backend/   # Express + TypeScript API
+└── frontend/  # React + Vite client
 ```
+
+### Backend architecture
+
+```text
 src/
- ├── controllers/
- ├── services/
- ├── repositories/
- ├── models/
- ├── routes/
- ├── middlewares/
- ├── utils/
- └── app.ts
+├── config/
+├── database/
+├── helper/
+├── middleware/
+├── module/
+│   ├── auth/
+│   ├── user/
+│   ├── vendor/
+│   ├── category/
+│   ├── product/
+│   ├── cart/
+│   ├── inventory/
+│   ├── discount/
+│   ├── order/
+│   └── payment/
+├── types/
+└── utils/
 ```
+
+The backend follows a layered style using **controller → service → repository → model**, with **Inversify** for dependency injection.
 
 ---
 
-## 🔐 Authentication & Authorization
+## ⚙️ Tech Stack
 
-### Features
-
-- JWT Access Token
-- Refresh Token
-- Role-based authorization
-
-### Roles
-
-- ADMIN
-- SELLER
-- CUSTOMER
+| Layer                  | Stack                                         |
+| ---------------------- | --------------------------------------------- |
+| Frontend               | React, Vite, TypeScript, React Query, Zustand |
+| Backend                | Node.js, Express, TypeScript                  |
+| Database               | MongoDB + Mongoose                            |
+| Cache / Queue          | Redis, BullMQ                                 |
+| Auth                   | JWT, Google OAuth, OTP                        |
+| Media                  | Cloudinary                                    |
+| Search / Observability | Elasticsearch, Winston                        |
 
 ---
 
-## 🧑‍💼 Seller Application Flow
+## 🚀 Quick Start
 
-1. Customer applies to become seller
-2. Application stored in `seller_applications`
-3. Admin reviews
-4. Approve → user becomes SELLER
-5. Reject → stays CUSTOMER
+### 1) Prerequisites
 
----
+Make sure you have installed:
 
-## 📦 Product System
+- `Node.js` 18+
+- `npm`
+- `MongoDB`
+- `Redis`
 
-### Structure
+### 2) Install dependencies
 
-```
-Category → Product (SPU) → SKU → Inventory
-```
+#### Backend
 
-### SPU
-
-- General product info
-
-### SKU
-
-- Variants (color, size, etc.)
-
-### Inventory
-
-- quantity
-- reserved
-
-Available stock = quantity - reserved
-
----
-
-## 📡 API Endpoints
-
-### Auth
-
-```
-POST /api/auth/register
-POST /api/auth/login
-POST /api/auth/refresh
-POST /api/auth/logout
-```
-
-### Seller
-
-```
-POST /api/seller/apply
-GET /api/seller/my-application
-GET /api/seller/admin/applications
-PATCH /api/seller/admin/applications/:id/approve
-PATCH /api/seller/admin/applications/:id/reject
-```
-
-### Product
-
-```
-POST /api/seller/products
-POST /api/seller/products/:id/skus
-PATCH /api/seller/skus/:id
-```
-
----
-
-## ⚙️ Environment Variables
-
-Create `.env` file:
-
-```
-PORT=3000
-MONGO_URI=your_mongodb_uri
-JWT_SECRET=your_secret
-REDIS_URL=your_redis_url
-```
-
----
-
-## 🚀 Getting Started
-
-### Install
-
-```
+```bash
+cd backend
 npm install
 ```
 
-### Run Dev
+#### Frontend
 
+```bash
+cd frontend
+npm install
 ```
+
+### 3) Configure environment
+
+Create `backend/.env` and provide values for the variables used by the app:
+
+```env
+PORT=3000
+BUILD_MODE=dev
+API_PREFIX=/api
+DOMAIN=localhost:3000
+CLIENT_DOMAIN=localhost:5173
+
+MONGO_URI=your_mongodb_uri
+REDIS_URI=your_redis_uri
+CORS_ALLOWED_ORIGINS=http://localhost:5173
+
+JWT_SECRET=your_jwt_secret
+JWT_REFRESH_SECRET=your_jwt_refresh_secret
+
+MAIL_HOST=your_mail_host
+MAIL_PORT=your_mail_port
+MAIL_USER=your_mail_user
+MAIL_PASS=your_mail_password
+MAIL_FROM=your_sender_email
+
+TWILIO_ACCOUNT_SID=your_twilio_sid
+TWILIO_AUTH_TOKEN=your_twilio_token
+TWILIO_PHONE_NUMBER=your_twilio_phone
+
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_REDIRECT_URI=your_google_redirect_uri
+
+ES_NODE=your_elasticsearch_node
+ES_USERNAME=your_es_username
+ES_PWD=your_es_password
+```
+
+### 4) Run the project
+
+#### Start backend
+
+```bash
+cd backend
 npm run dev
 ```
 
-### Build
+#### Start frontend
 
+```bash
+cd frontend
+npm run dev
 ```
+
+---
+
+## 📜 Useful Scripts
+
+### Backend
+
+```bash
+npm run dev
 npm run build
+npm run start
+npm run lint
+npm run lint:fix
+npm run prettier:fix
+npm run generate:permissions
+npm run generate:roles
+```
+
+### Frontend
+
+```bash
+npm run dev
+npm run build
+npm run preview
+npm run lint
+npm run lint:fix
+npm run prettier:fix
 ```
 
 ---
 
-## 📈 Future Improvements
+## 🌐 Main API Modules
 
-- Payment integration (Stripe, VNPay)
-- Order system
-- Cart service (Redis)
-- Elasticsearch product search
-- Notification system
+The backend currently exposes flows around these route groups:
+
+- `auth` → sign up, sign in, refresh token, logout, verify OTP, resend OTP
+- `users` → profile and account actions
+- `vendors` → vendor onboarding and approval flow
+- `categories` → category CRUD
+- `products` → SPU / SKU management
+- `cart` → add, update, remove, clear cart
+- `inventory` → stock, reserve, release, commit
+- `discounts` → create, apply, disable, query available discounts
+- `orders` → place and manage orders
+- `payments` → COD payment tracking
+
+Health check:
+
+```http
+GET /check-status
+```
 
 ---
 
-## 👨‍💻 Author
+## 🛒 Commerce Flow Overview
 
-Huynh Nhat Hao
+```text
+Category -> Product (SPU) -> SKU -> Inventory -> Cart -> Order -> Payment (COD)
+```
+
+---
+
+## 📌 Current Notes
+
+- Payment flow is currently **COD only**.
+- Redis is used for transient features such as **cart**, **OTP**, and **session/token management**.
+- The codebase is structured for future expansion into more advanced payment and search flows.
 
 ---
 
 ## 📄 License
 
-MIT
+This project is currently for learning / internal development use.
