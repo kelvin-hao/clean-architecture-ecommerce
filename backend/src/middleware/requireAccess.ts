@@ -2,43 +2,44 @@ import { Request, Response, NextFunction } from 'express'
 import { ForbiddenError, UnauthorizedError } from '~/helper/response/errorResponse'
 import { PolicyFn } from '~/utils/policy.utils'
 
-function matchPermission(userPerms: string[], required: string) {
-  return userPerms.some((p) => {
-    if (p === required) return true
-  })
+function matchPermission(userPerms: string[] = [], required: string) {
+  return userPerms.includes(required)
 }
 
 export const requireAccess = (config: { permissions?: string[]; policies?: PolicyFn[] }) => {
   return async (req: Request, _: Response, next: NextFunction) => {
-    const user = req.user
-    if (!user) return next(new UnauthorizedError())
+    try {
+      const user = req.user
+      if (!user) return next(new UnauthorizedError('Not authenticated'))
 
-    // RBAC
-    if (config.permissions?.length) {
-      const hasPermission = config.permissions.some((p) => matchPermission(user.permissions, p))
-
-      if (!hasPermission) {
-        return next(new ForbiddenError())
-      }
-    }
-
-    // ABAC (policy check)
-    if (config.policies?.length) {
-      const results = await Promise.all(
-        config.policies.map((policy) =>
-          policy({
-            user,
-            resource: req.resource
-          })
+      if (config.permissions?.length) {
+        const hasPermission = config.permissions.some((permission) =>
+          matchPermission(user.permissions ?? [], permission)
         )
-      )
 
-      // allow if ANY policy passes
-      if (!results.some(Boolean)) {
-        return next(new ForbiddenError())
+        if (!hasPermission) {
+          return next(new ForbiddenError('You do not have permission to access this resource'))
+        }
       }
-    }
 
-    return next(new ForbiddenError())
+      if (config.policies?.length) {
+        const results = await Promise.all(
+          config.policies.map((policy) =>
+            policy({
+              user,
+              resource: req.resource
+            })
+          )
+        )
+
+        if (!results.some(Boolean)) {
+          return next(new ForbiddenError('Access denied by policy'))
+        }
+      }
+
+      return next()
+    } catch (error) {
+      return next(error)
+    }
   }
 }

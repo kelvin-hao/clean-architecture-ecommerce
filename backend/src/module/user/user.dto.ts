@@ -14,7 +14,6 @@ import {
   Max
 } from 'class-validator'
 import { BaseExposeDto, BaseDto } from '~/helper'
-import { IRole } from '~/types/interface'
 
 // --- Response DTO (Output) ---
 
@@ -24,20 +23,23 @@ export class ResponseUserDTO extends BaseExposeDto {
   name: string
 
   @Expose()
-  phone_number: string
-
-  @Expose()
   email: string
 
   @Expose()
-  avatar: string
+  phone_number?: string
+
+  @Expose()
+  @Transform(({ value }) => value?.url ?? value ?? '')
+  avatar?: string
 
   @Expose()
   two_FA: boolean
 
   @Expose()
-  @Transform(({ obj }) => obj.roles?.map((role: IRole) => role.name) ?? [])
   roles: string[]
+
+  @Expose()
+  status: string
 }
 
 // --- Validation DTOs (Input) ---

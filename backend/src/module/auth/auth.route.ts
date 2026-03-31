@@ -44,7 +44,7 @@ const createAuthRoute = async (): Promise<Router> => {
   authRoute
     .route(routeConfig.auth.child.LoginWithGoogleCallback.path)
     .get(
-      validationInput(GoogleLoginDTO, RequestPartEnum.BODY),
+      validationInput(GoogleLoginDTO, RequestPartEnum.QUERY),
       catchErrorHandler(AuthController.loginWithGoogleCallback.bind(AuthController))
     )
 

@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength, IsJWT, MaxLength } from 'class-validator'
+import { IsEmail, IsNotEmpty, IsString, MinLength, IsJWT, MaxLength, IsOptional } from 'class-validator'
 import { BaseDto } from '~/helper'
 
 export class VerifyToken2FADTO extends BaseDto {
@@ -8,25 +8,41 @@ export class VerifyToken2FADTO extends BaseDto {
 }
 
 export class GoogleLoginDTO extends BaseDto {
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  iss: string
+  iss?: string
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  code: string
+  code?: string
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  scope: string
+  scope?: string
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  authuser: string
+  authuser?: string
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  prompt: string
+  prompt?: string
+
+  @IsOptional()
+  @IsString()
+  state?: string
+
+  @IsOptional()
+  @IsString()
+  error?: string
+
+  @IsOptional()
+  @IsString()
+  error_subtype?: string
+
+  @IsOptional()
+  @IsString()
+  hd?: string
 }
 
 export class ResetPasswordDTO extends BaseDto {

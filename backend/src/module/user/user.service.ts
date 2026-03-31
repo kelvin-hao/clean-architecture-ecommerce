@@ -57,7 +57,7 @@ class UserService {
     const user = await this.userRepository.findById(userId)
     if (!user) throw new BadRequestError('Can not get profile')
 
-    const safeUser = plainToInstance(ResponseUserDTO, user, {
+    const safeUser = plainToInstance(ResponseUserDTO, user.toObject(), {
       excludeExtraneousValues: true
     })
 
@@ -104,7 +104,24 @@ class UserService {
     const userKey = `user:${userId}`
     await this.redisClient.del(userKey)
 
-    const result = await this.userRepository.update({ _id: userId }, { ...payload, avatar: { url: payload.avatar } })
+    const updatePayload: Partial<IUser> & { avatar?: IUser['avatar'] } = {}
+
+    if (typeof payload.name === 'string') {
+      updatePayload.name = payload.name.trim()
+    }
+
+    if (typeof payload.phone_number === 'string') {
+      updatePayload.phone_number = payload.phone_number.trim()
+    }
+
+    if (typeof payload.avatar === 'string') {
+      updatePayload.avatar = {
+        ...(user.avatar ?? {}),
+        url: payload.avatar.trim()
+      }
+    }
+
+    const result = await this.userRepository.update({ _id: userId }, updatePayload)
     if (!result) throw new BadRequestError('Edit profile failed')
 
     const safeUser = plainToInstance(ResponseUserDTO, result, {
@@ -112,8 +129,10 @@ class UserService {
     })
 
     await this.redisClient.set(userKey, JSON.stringify(safeUser), 'EX', FIVE_MINUTES_IN_SECONDS)
+
     return {
-      id: safeUser.id
+      id: safeUser.id,
+      user: safeUser
     }
   }
 
@@ -142,6 +161,7 @@ class UserService {
           const rawData = {
             name: row.name,
             email: row.email,
+            phone_number: row.phone_number,
             avatar: row.avatar,
             password: row.password
           }
@@ -169,6 +189,7 @@ class UserService {
           batch.push({
             name: data.name,
             email: data.email,
+            phone_number: data.phone_number,
             avatar: {
               url: data.avatar
             },

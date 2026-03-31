@@ -23,7 +23,7 @@ class JsonWebToken {
       expiresIn: ACCESS_TOKEN_EXPRIRE_IN
     })
 
-    const refreshPayload: Omit<JwtPayload, 'permissions'> = {
+    const refreshPayload: Omit<JwtPayload, 'permissions' | 'roles'> = {
       id: payload.id,
       sessionId: payload.sessionId
     }

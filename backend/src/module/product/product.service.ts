@@ -1,15 +1,22 @@
 import { inject, injectable } from 'inversify'
 import { plainToInstance } from 'class-transformer'
+import env from '~/config/env/dotenv.config'
+import { elasticSearchProvider } from '~/database'
+import { productIndex } from '~/database/elasticsearch/product.index'
+import type { ProductIndexPayload } from '~/helper/jobs/backgroundJobManager'
+import { JobType } from '~/helper/jobs/jobManager'
+import { QueueManager, QueueName } from '~/helper/jobs/queueManager'
 import { APIFeatures } from '~/helper'
 import { BadRequestError, NotFoundError } from '~/helper/response/errorResponse'
 import { ContainerInjectionRegistry } from '~/helper/injection/injectionManager'
 import { ProductStatusEnum, VariationOption, VariationValue } from '~/types/type'
 import { convertToObjectId, slugify } from '~/utils'
 import { generateSKUCode } from '~/utils/product.util'
-import ProductSKURepository from './product_sku.repository'
-import ProductSPURepository from './product._spu.repository'
 import CategoryRepository from '../category/caterogy.repository'
+import { ProductSearchBuilder, type SortProduct } from '../search/products/product.search'
 import VendorRepository from '../vendor/vendor.repository'
+import ProductSPURepository from './product._spu.repository'
+import ProductSKURepository from './product_sku.repository'
 import {
   BulkUpdateProductSKUDto,
   CreateProductSPUDto,
@@ -44,7 +51,7 @@ class ProductService {
     if (!existingCategory) throw new BadRequestError('Category not found')
     if (existingSlug) throw new BadRequestError('Product name already exists')
 
-    return this.spuRepository.withTransaction(async (session) => {
+    const createdProduct = await this.spuRepository.withTransaction(async (session) => {
       const spu = await this.spuRepository.create(
         {
           ...payload,
@@ -74,11 +81,23 @@ class ProductService {
       const createdSkus = await this.skuRepository.createMany(skusData, session)
 
       return {
-        id: spu._id,
-        skuCount: createdSkus.length,
-        skus: this.toProductSkuResponses(createdSkus)
+        spu,
+        createdSkus
       }
     })
+
+    await this.enqueueProductIndex(createdProduct.spu).catch((error: unknown) => {
+      console.error(
+        `[ProductService] Failed to queue Elasticsearch indexing for product ${createdProduct.spu._id.toString()}`,
+        error
+      )
+    })
+
+    return {
+      id: createdProduct.spu._id,
+      skuCount: createdProduct.createdSkus.length,
+      skus: this.toProductSkuResponses(createdProduct.createdSkus)
+    }
   }
 
   async getProductSkus(productId: string) {
@@ -164,24 +183,15 @@ class ProductService {
   }
 
   async getProducts(query: ProductQueryDto) {
-    const filters = this.buildProductFilters(query)
-    const productsFeatures = new APIFeatures(this.spuRepository.getQuery(filters), query).search().sort().paginate()
-    const products = await productsFeatures.exec()
+    if (this.shouldUseElasticSearch(query)) {
+      const elasticResult = await this.getProductsFromElastic(query)
 
-    const responseProducts = products.map((product) =>
-      plainToInstance(ProductResponseDto, product, {
-        excludeExtraneousValues: true
-      })
-    )
-
-    return {
-      data: responseProducts,
-      meta: {
-        page: Number(query.page) || 1,
-        limit: Number(query.limit) || 10,
-        count: responseProducts.length
+      if (elasticResult) {
+        return elasticResult
       }
     }
+
+    return this.getProductsFromMongo(query)
   }
 
   async getProductById(productId: string) {
@@ -348,6 +358,171 @@ class ProductService {
         id: deletedProduct._id
       }
     })
+  }
+
+  private async enqueueProductIndex(product: {
+    _id: { toString(): string }
+    name: string
+    description?: string
+    brand?: string
+    category: unknown
+    base_price?: number
+    rating_average?: number
+  }) {
+    const productQueue = await QueueManager.getQueue(QueueName.PRODUCT_INDEX)
+
+    await productQueue.add(
+      JobType.INDEX_PRODUCT,
+      {
+        payload: this.buildProductIndexPayload(product)
+      },
+      {
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 1000
+        },
+        removeOnComplete: true,
+        removeOnFail: 50
+      }
+    )
+  }
+
+  private buildProductIndexPayload(product: {
+    _id: { toString(): string }
+    name: string
+    description?: string
+    brand?: string
+    category: unknown
+    base_price?: number
+    rating_average?: number
+  }): ProductIndexPayload {
+    return {
+      id: product._id.toString(),
+      name: product.name,
+      description: product.description ?? '',
+      brand: product.brand ?? '',
+      category: String(product.category),
+      price: product.base_price ?? 0,
+      rating: product.rating_average ?? 0,
+      createdAt: new Date().toISOString()
+    }
+  }
+
+  private async getProductsFromMongo(query: ProductQueryDto) {
+    const filters = this.buildProductFilters(query)
+    const productsFeatures = new APIFeatures(this.spuRepository.getQuery(filters), query).search().sort().paginate()
+    const products = await productsFeatures.exec()
+
+    return this.buildProductListResponse(products, query)
+  }
+
+  private async getProductsFromElastic(query: ProductQueryDto) {
+    try {
+      const elastic = await elasticSearchProvider()
+      const searchRequest = new ProductSearchBuilder({
+        keyword: query.keyword,
+        filters: {
+          brand: query.brand,
+          category: query.category,
+          priceFrom: query.min_price,
+          priceTo: query.max_price
+        },
+        sort: this.normalizeElasticSort(query.sort),
+        page: Number(query.page) || 1,
+        limit: Number(query.limit) || 10
+      }).build()
+
+      const response = await elastic.search({
+        index: productIndex.name,
+        ...searchRequest,
+        track_total_hits: true
+      })
+
+      const ids = response.hits.hits.map((hit) => hit._id).filter((id): id is string => Boolean(id))
+
+      if (ids.length === 0) {
+        return this.buildProductListResponse([], query)
+      }
+
+      const products = await this.spuRepository.findAll({
+        ...this.buildProductFilters(query),
+        _id: { $in: ids.map((id) => convertToObjectId(id)) }
+      })
+
+      const productMap = new Map(products.map((product) => [product._id.toString(), product]))
+      const orderedProducts = ids
+        .map((id) => productMap.get(id))
+        .filter((product): product is (typeof products)[number] => Boolean(product))
+
+      return this.buildProductListResponse(orderedProducts, query)
+    } catch (error: unknown) {
+      console.error('[ProductService] Elasticsearch product search failed. Falling back to MongoDB.', error)
+      return null
+    }
+  }
+
+  private buildProductListResponse(products: unknown[], query: ProductQueryDto) {
+    const responseProducts = products.map((product) =>
+      plainToInstance(ProductResponseDto, product, {
+        excludeExtraneousValues: true
+      })
+    )
+
+    return {
+      data: responseProducts,
+      meta: {
+        page: Number(query.page) || 1,
+        limit: Number(query.limit) || 10,
+        count: responseProducts.length
+      }
+    }
+  }
+
+  private shouldUseElasticSearch(query: ProductQueryDto) {
+    if (!env.ES_NODE) {
+      return false
+    }
+
+    return Boolean(
+      query.keyword ||
+      query.brand ||
+      query.category ||
+      query.min_price !== undefined ||
+      query.max_price !== undefined ||
+      this.normalizeElasticSort(query.sort)
+    )
+  }
+
+  private normalizeElasticSort(sort?: string): SortProduct | undefined {
+    const normalizedSort = sort?.split(',')[0]?.trim()
+
+    switch (normalizedSort) {
+      case 'price_asc':
+      case 'price':
+      case 'base_price':
+        return 'price_asc'
+
+      case 'price_desc':
+      case '-price':
+      case '-base_price':
+        return 'price_desc'
+
+      case 'newest':
+      case 'createdAt':
+      case '-createdAt':
+        return 'newest'
+
+      case 'rating':
+      case '-rating_average':
+        return 'rating'
+
+      case 'sold':
+        return 'sold'
+
+      default:
+        return undefined
+    }
   }
 
   private buildProductFilters(query: ProductQueryDto) {

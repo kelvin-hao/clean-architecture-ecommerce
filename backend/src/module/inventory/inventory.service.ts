@@ -1,8 +1,10 @@
 import { inject, injectable } from 'inversify'
+import Redis from 'ioredis'
 import { APIFeatures } from '~/helper'
 import { BadRequestError, NotFoundError } from '~/helper/response/errorResponse'
 import { ContainerInjectionRegistry } from '~/helper/injection/injectionManager'
 import { convertToObjectId } from '~/utils'
+import { ONE_DAYS_IN_SECONDS } from '~/utils/const.util'
 import ProductSKURepository from '../product/product_sku.repository'
 import InventoryRepository from './inventory.repository'
 import { CreateInventoryDto, InventoryQueryDto, InventoryQuantityDto, UpdateInventoryDto } from './inventory.dto'
@@ -11,7 +13,8 @@ import { CreateInventoryDto, InventoryQueryDto, InventoryQuantityDto, UpdateInve
 class InventoryService {
   constructor(
     @inject(ContainerInjectionRegistry.InventoryRepository) private inventoryRepository: InventoryRepository,
-    @inject(ContainerInjectionRegistry.ProductSKURepository) private skuRepository: ProductSKURepository
+    @inject(ContainerInjectionRegistry.ProductSKURepository) private skuRepository: ProductSKURepository,
+    @inject(ContainerInjectionRegistry.RedisDB) private redisClient: Redis
   ) {}
 
   async createInventory(skuId: string, payload: CreateInventoryDto) {
@@ -22,7 +25,7 @@ class InventoryService {
       throw new BadRequestError('Inventory already exists for this SKU')
     }
 
-    return this.inventoryRepository.create({
+    const createdInventory = await this.inventoryRepository.create({
       skuId: convertToObjectId(skuId),
       location: payload.location?.trim() || 'default',
       stock: payload.stock,
@@ -31,6 +34,10 @@ class InventoryService {
       sold: 0,
       is_delete: false
     })
+
+    await this.syncAvailableStockCache(skuId, createdInventory.available)
+
+    return createdInventory
   }
 
   async getInventories(query: InventoryQueryDto) {
@@ -98,6 +105,8 @@ class InventoryService {
       throw new BadRequestError('Can not update inventory. Please try again')
     }
 
+    await this.syncAvailableStockCache(skuId, updatedInventory.available)
+
     return updatedInventory
   }
 
@@ -109,6 +118,8 @@ class InventoryService {
     if (!inventory) {
       throw new BadRequestError('Not enough available stock to reserve')
     }
+
+    await this.syncAvailableStockCache(skuId, inventory.available)
 
     return inventory
   }
@@ -122,6 +133,8 @@ class InventoryService {
       throw new BadRequestError('Reserved quantity is not enough to release')
     }
 
+    await this.syncAvailableStockCache(skuId, inventory.available)
+
     return inventory
   }
 
@@ -134,7 +147,22 @@ class InventoryService {
       throw new BadRequestError('Reserved quantity is not enough to commit')
     }
 
+    await this.syncAvailableStockCache(skuId, inventory.available)
+
     return inventory
+  }
+
+  private getInventoryStockKey(skuId: string) {
+    return `inventory:available:${skuId}`
+  }
+
+  private async syncAvailableStockCache(skuId: string, available: number) {
+    await this.redisClient.set(
+      this.getInventoryStockKey(skuId),
+      String(Math.max(0, available)),
+      'EX',
+      ONE_DAYS_IN_SECONDS
+    )
   }
 
   private async ensureSkuExists(skuId: string) {

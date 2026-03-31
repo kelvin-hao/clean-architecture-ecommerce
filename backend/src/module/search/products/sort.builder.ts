@@ -6,16 +6,16 @@ export class SortBuilder {
 
     switch (sort) {
       case 'price_asc':
-        return [{ minPrice: { order: 'asc' } }]
+        return [{ price: { order: 'asc' } }]
 
       case 'price_desc':
-        return [{ minPrice: { order: 'desc' } }]
+        return [{ price: { order: 'desc' } }]
 
       case 'newest':
         return [{ createdAt: { order: 'desc' } }]
 
       case 'sold':
-        return [{ sold: { order: 'desc' } }]
+        return [{ createdAt: { order: 'desc' } }]
 
       case 'rating':
         return [{ rating: { order: 'desc' } }]

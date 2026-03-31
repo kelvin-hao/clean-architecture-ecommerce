@@ -3,7 +3,7 @@ import { redisProvider } from '~/database'
 import jsonWebToken from '~/helper/jwt'
 import { GoneError, UnauthorizedError } from '~/helper/response/errorResponse'
 
-async function isAuth(req: Request, res: Response, next: NextFunction) {
+async function isAuth(req: Request, _: Response, next: NextFunction) {
   try {
     const authHeader = req.get('Authorization')
 
@@ -22,7 +22,6 @@ async function isAuth(req: Request, res: Response, next: NextFunction) {
     }
 
     const sessionKey = `session:${decodedToken.id}:${decodedToken.sessionId}`
-
     const sessionExists = await redisClient.exists(sessionKey)
 
     if (!sessionExists) {
@@ -30,7 +29,7 @@ async function isAuth(req: Request, res: Response, next: NextFunction) {
     }
 
     req.user = decodedToken
-    next()
+    return next()
   } catch (error) {
     const err = error as Error
 
@@ -38,7 +37,11 @@ async function isAuth(req: Request, res: Response, next: NextFunction) {
       return next(new GoneError('Token expired'))
     }
 
-    next(new UnauthorizedError(`Not authenticated. ${err.message}`))
+    if (error instanceof UnauthorizedError) {
+      return next(error)
+    }
+
+    return next(new UnauthorizedError(err.message || 'Not authenticated'))
   }
 }
 

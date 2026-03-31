@@ -37,11 +37,12 @@ export class ProductSearchBuilder extends BaseQueryBuilder {
 
   private buildQuery() {
     if (!this.params.keyword) return
+
     if (this.query.bool!.must && Array.isArray(this.query.bool!.must)) {
       this.query.bool!.must.push({
         multi_match: {
           query: this.params.keyword,
-          fields: ['name^3', 'description', 'category^2'],
+          fields: ['name^4', 'name.autocomplete^5', 'description', 'brand^2'],
           fuzziness: 'AUTO'
         }
       })

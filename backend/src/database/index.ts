@@ -1,23 +1,32 @@
+import { Client } from '@elastic/elasticsearch'
 import Redis from 'ioredis'
+import env from '~/config/env/dotenv.config'
 import { ConnectionsEnum, MongooseType } from '~/types/type'
 import { MongooseConnection } from './mongo.db'
 import { RedisConnection } from './redis.db'
 import databaseManager from '~/database/dbManager'
 import { InternalServerError } from '~/helper/response/errorResponse'
 import { ElasticsearchConnection } from './elasticsearch/elastic.db'
-import { Client } from '@elastic/elasticsearch'
 
 export const initializeDatabase = async () => {
   databaseManager.register(ConnectionsEnum.MONGO, new MongooseConnection())
   databaseManager.register(ConnectionsEnum.REDIS, new RedisConnection())
-  // databaseManager.register(ConnectionsEnum.ELASTICSEARCH, new ElasticsearchConnection())
+
+  if (env.ES_NODE) {
+    databaseManager.register(ConnectionsEnum.ELASTICSEARCH, new ElasticsearchConnection())
+  }
 
   try {
-    await Promise.all([
+    const connections: Array<Promise<unknown>> = [
       databaseManager.getConnection<MongooseType>(ConnectionsEnum.MONGO),
       databaseManager.getConnection<Redis>(ConnectionsEnum.REDIS)
-      // databaseManager.getConnection<Client>(ConnectionsEnum.ELASTICSEARCH)
-    ])
+    ]
+
+    if (env.ES_NODE) {
+      connections.push(databaseManager.getConnection<Client>(ConnectionsEnum.ELASTICSEARCH))
+    }
+
+    await Promise.all(connections)
   } catch (_) {
     throw new InternalServerError('Databases connection failed')
   }

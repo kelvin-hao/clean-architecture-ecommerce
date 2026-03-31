@@ -63,7 +63,6 @@ const createUserRoute = async (): Promise<Router> => {
 
   userRoute.route(routeConfig.users.child.deleteAccount.path).delete(
     isAuth,
-    isAuth,
     attachUser,
     requireAccess({
       permissions: [PERM(RESOURCES.USER, ACTIONS.DELETE, SCOPES.OWN)],
@@ -74,7 +73,6 @@ const createUserRoute = async (): Promise<Router> => {
 
   userRoute.route(routeConfig.users.child.getProfile.path).get(
     isAuth,
-    isAuth,
     attachUser,
     requireAccess({
       permissions: [PERM(RESOURCES.USER, ACTIONS.READ, SCOPES.OWN)],
@@ -84,7 +82,6 @@ const createUserRoute = async (): Promise<Router> => {
   )
 
   userRoute.route(routeConfig.users.child.editProfile.path).patch(
-    isAuth,
     isAuth,
     attachUser,
     requireAccess({

@@ -11,6 +11,7 @@ export interface IUser extends Document {
   permissions: string[]
   password: string
   name: string
+  phone_number?: string
   is_delete: boolean
   status: UserStatusEnum
   avatar: Image
@@ -70,6 +71,12 @@ const UserSchema: Schema = new Schema<IUser>(
       type: String,
       required: true,
       trim: true
+    },
+
+    phone_number: {
+      type: String,
+      trim: true,
+      default: null
     },
 
     avatar: {

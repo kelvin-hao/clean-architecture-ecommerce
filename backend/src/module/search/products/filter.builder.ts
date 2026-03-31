@@ -6,14 +6,21 @@ export class FilterBuilder {
     const result: estypes.QueryDslQueryContainer[] = []
 
     if (filters?.brand) {
-      result.push({ term: { brand: filters.brand } })
+      result.push({
+        wildcard: {
+          brand: {
+            value: `*${filters.brand}*`,
+            case_insensitive: true
+          }
+        }
+      })
     }
 
     if (filters?.category) {
       result.push({ term: { category: filters.category } })
     }
 
-    if (filters?.priceFrom || filters?.priceTo) {
+    if (filters?.priceFrom !== undefined || filters?.priceTo !== undefined) {
       result.push({
         range: {
           price: {

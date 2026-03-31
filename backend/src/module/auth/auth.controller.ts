@@ -67,16 +67,16 @@ class AuthController {
   }
 
   async loginWithGoogle(req: Request, res: Response) {
-    const url = await this.authService.loginWithGoogle()
+    const redirectPath = typeof req.query.redirect === 'string' ? req.query.redirect : undefined
+    const url = await this.authService.loginWithGoogle(redirectPath)
     return res.redirect(url)
   }
 
   async loginWithGoogleCallback(req: Request, res: Response) {
-    const payload = req.bodyValidated as GoogleLoginDTO
-    console.log(payload)
-    const data = await this.authService.loginWithGoogleCallback(payload)
+    const payload = req.queryValidated as GoogleLoginDTO
+    const redirectUrl = await this.authService.loginWithGoogleCallback(payload)
 
-    return new OKResponse(data).send(req, res)
+    return res.redirect(redirectUrl)
   }
 
   async forgotPassword(req: Request, res: Response) {

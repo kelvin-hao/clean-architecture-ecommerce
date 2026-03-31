@@ -107,6 +107,7 @@ class AuthService {
     const userRole = await this.roleRepository.findOne({
       name: 'user'
     })
+
     if (!userRole) throw new BadRequestError('Something went wrong. Please try again')
 
     const user = await this.userRepository.create({
@@ -120,20 +121,44 @@ class AuthService {
     }
   }
 
-  async loginWithGoogle() {
+  async loginWithGoogle(redirectPath?: string) {
+    const safeRedirect = this.sanitizeClientRedirect(redirectPath)
+
     const url = this.googleClient.generateAuthUrl({
       access_type: 'offline',
       prompt: 'consent',
-      scope: ['openid', 'email', 'profile']
+      scope: ['openid', 'email', 'profile'],
+      state: safeRedirect
     })
 
     return url
   }
 
-  async loginWithGoogleCallback({ code }: GoogleLoginDTO) {
+  async loginWithGoogleCallback({ code, state, error }: GoogleLoginDTO) {
+    const safeRedirect = this.sanitizeClientRedirect(state)
+
+    if (error) {
+      return this.buildGoogleCallbackRedirect({
+        redirectTo: safeRedirect,
+        error: 'Google login was cancelled or failed. Please try again.'
+      })
+    }
+
+    if (!code) {
+      return this.buildGoogleCallbackRedirect({
+        redirectTo: safeRedirect,
+        error: 'Missing Google authorization code.'
+      })
+    }
+
     const { tokens } = await this.googleClient.getToken(code)
 
-    if (!tokens.id_token) throw new BadRequestError('No id_tokens present google')
+    if (!tokens.id_token) {
+      return this.buildGoogleCallbackRedirect({
+        redirectTo: safeRedirect,
+        error: 'Google did not return a valid identity token.'
+      })
+    }
 
     const ticket = await this.googleClient.verifyIdToken({
       idToken: tokens.id_token,
@@ -143,37 +168,62 @@ class AuthService {
     const payload = ticket.getPayload()
 
     if (!payload?.email) {
-      throw new UnauthorizedError('Invalid Google token.')
-    }
-
-    let user = await this.userRepository.findByEmail(payload.email)
-
-    if (!user) {
-      const password = bcrypt.hashSync(generatePassword())
-
-      user = await this.userRepository.create({
-        email: payload.email,
-        name: payload.name,
-        avatar: {
-          url: payload.picture!
-        },
-        password
+      return this.buildGoogleCallbackRedirect({
+        redirectTo: safeRedirect,
+        error: 'Invalid Google account information.'
       })
     }
 
-    return this.generateSessionToken(user)
+    const normalizedEmail = payload.email.trim().toLowerCase()
+    let user = await this.userRepository.findByEmail(normalizedEmail)
+
+    if (!user) {
+      const userRole = await this.roleRepository.findOne({ name: 'user' })
+      if (!userRole) throw new BadRequestError('Default user role is missing. Please seed roles first.')
+
+      const password = bcrypt.hashSync(generatePassword(), SALT_NUMBER)
+
+      user = await this.userRepository.create({
+        email: normalizedEmail,
+        name: payload.name?.trim() || normalizedEmail.split('@')[0],
+        avatar: {
+          url: payload.picture || ''
+        },
+        password,
+        roles: [userRole.name],
+        permissions: userRole.permissions
+      })
+    }
+
+    const session = await this.generateSessionToken(user)
+
+    return this.buildGoogleCallbackRedirect({
+      redirectTo: safeRedirect,
+      accessToken: session.accessToken,
+      refreshToken: session.refreshToken,
+      user: {
+        id: `${user._id}`,
+        email: user.email,
+        name: user.name,
+        avatar: user.avatar?.url,
+        two_FA: user.two_FA,
+        roles: user.roles
+      }
+    })
   }
 
   async signin(payload: LoginDTO) {
-    const rateLimitKey = `login:${payload.email}`
+    const normalizedEmail = payload.email.trim().toLowerCase()
+    const rateLimitKey = `login:${normalizedEmail}`
+    const invalidCredentialsError = new BadRequestError('Invalid email or password')
 
     if (await this.redisClient.get(rateLimitKey)) throw new TooManyRequest()
-    const user = await this.userRepository.findByEmailAndSelectPassword(payload.email)
+    const user = await this.userRepository.findByEmailAndSelectPassword(normalizedEmail)
 
-    if (!user) throw new NotFoundError('User does not exist. Please sign up')
+    if (!user) throw invalidCredentialsError
 
     const isMatchPassword = bcrypt.compareSync(payload.password, user.password)
-    if (!isMatchPassword) throw new BadRequestError('Email or password is not matching')
+    if (!isMatchPassword) throw invalidCredentialsError
 
     const userData = JSON.stringify({
       id: user._id
@@ -246,16 +296,28 @@ class AuthService {
   }
 
   async forgotPassowrd(payload: ForgotPasswordDTO) {
-    const user = await this.userRepository.findByEmail(payload.email)
-    if (!user) throw new NotFoundError('Can not find user')
+    const normalizedEmail = payload.email.trim().toLowerCase()
+    const rateLimitKey = `forgot-password:${normalizedEmail}`
+    const genericResponse = {
+      message: 'If an account exists for this email, a reset link has been sent.'
+    }
+
+    if (await this.redisClient.get(rateLimitKey)) {
+      throw new TooManyRequest('Too many requests. Please try again later')
+    }
+
+    await this.redisClient.set(rateLimitKey, 'true', 'EX', ONE_MINUTES_IN_SECONDS)
+
+    const user = await this.userRepository.findByEmail(normalizedEmail)
+    if (!user) return genericResponse
 
     const resetToken = randomBytes(32).toString('hex')
     const resetKey = `password-reset:${resetToken}`
 
     await this.redisClient.setex(resetKey, FIFTEN_MINUTES_IN_SECONDS, user.id)
 
-    const resetUrl = `http://${env.CLIENT_DOMAIN}/reset-password?&token=${resetToken}`
-    const recipient = payload.email
+    const resetUrl = `http://${env.CLIENT_DOMAIN}/reset-password?token=${resetToken}`
+    const recipient = normalizedEmail
     const subject = EMAIL_RESET_PASSWORD
     const holder = {
       reset_url: resetUrl
@@ -273,9 +335,7 @@ class AuthService {
       }
     })
 
-    return {
-      message: 'Reset password request has been set to your email'
-    }
+    return genericResponse
   }
 
   async resetPassword({ token, newPassword }: ResetPasswordDTO) {
@@ -324,6 +384,43 @@ class AuthService {
     return {
       userId
     }
+  }
+
+  private buildGoogleCallbackRedirect(params: {
+    redirectTo: string
+    accessToken?: string
+    refreshToken?: string
+    user?: {
+      id: string
+      email: string
+      name: string
+      avatar?: string
+      two_FA?: boolean
+      roles?: string[]
+    }
+    error?: string
+  }) {
+    const hashParams = new URLSearchParams()
+    hashParams.set('redirect', params.redirectTo)
+
+    if (params.accessToken) hashParams.set('accessToken', params.accessToken)
+    if (params.refreshToken) hashParams.set('refreshToken', params.refreshToken)
+    if (params.user) hashParams.set('user', JSON.stringify(params.user))
+    if (params.error) hashParams.set('error', params.error)
+
+    return `http://${env.CLIENT_DOMAIN}/auth/google/callback#${hashParams.toString()}`
+  }
+
+  private sanitizeClientRedirect(redirectPath?: string) {
+    if (!redirectPath) return '/'
+
+    const normalizedPath = redirectPath.trim()
+
+    if (!normalizedPath.startsWith('/') || normalizedPath.startsWith('//')) {
+      return '/'
+    }
+
+    return normalizedPath
   }
 
   private async sendVerificationOtp(email: string, userData: string) {

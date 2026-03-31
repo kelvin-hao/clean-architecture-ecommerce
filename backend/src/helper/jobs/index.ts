@@ -1,17 +1,17 @@
-import { ISendNotification } from '../notification/notificationTemplate'
-import { SendEmailJob } from './backgroundJobManager'
+import { IndexProductJob, SendEmailJob } from './backgroundJobManager'
 import { JobManager, JobType } from './jobManager'
 import { QueueName } from './queueManager'
 import { WorkerManager } from './workerManager'
 
 export interface IJob {
-  execute(data: ISendNotification): Promise<void>
+  execute(data: unknown): Promise<void>
 }
 
 export const initializeBackgroundJob = async () => {
   // registry jobs
   JobManager.register(JobType.SEND_EMAIL, new SendEmailJob())
+  JobManager.register(JobType.INDEX_PRODUCT, new IndexProductJob())
 
   // initial worker
-  await WorkerManager.createWorker(QueueName.EMAIL)
+  await Promise.all([WorkerManager.createWorker(QueueName.EMAIL), WorkerManager.createWorker(QueueName.PRODUCT_INDEX)])
 }
