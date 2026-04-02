@@ -1,4 +1,4 @@
-import { Loader2, LogOut, ShieldCheck, ShoppingBag, Sparkles } from 'lucide-react'
+import { Loader2, LogOut, ShieldCheck, ShoppingBag } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 
@@ -34,7 +34,6 @@ export default function HomePage() {
         <div className='flex flex-col gap-4 rounded-3xl bg-slate-950 p-6 text-white shadow-2xl sm:flex-row sm:items-center sm:justify-between'>
           <div className='space-y-2'>
             <div className='inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-medium'>
-              <Sparkles className='size-3.5 text-cyan-300' />
               Signed in successfully
             </div>
             <h1 className='text-3xl font-bold'>Welcome {user?.name || user?.email || 'back'} 👋</h1>
@@ -69,7 +68,6 @@ export default function HomePage() {
           </div>
 
           <div className='rounded-2xl border border-gray-200 bg-white p-5 shadow-sm'>
-            <Sparkles className='mb-3 size-5 text-violet-600' />
             <h2 className='font-semibold text-gray-900'>Modern auth flow</h2>
             <p className='mt-1 text-sm text-gray-500'>Register, verify OTP, and login are now visually consistent.</p>
           </div>

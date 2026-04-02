@@ -6,6 +6,8 @@ export const registerSchema = z
 
     email: z.string().trim().email('Invalid email address'),
 
+    phone_number: z.string().optional(),
+
     password: z
       .string()
       .min(8, 'Password must be at least 8 characters')

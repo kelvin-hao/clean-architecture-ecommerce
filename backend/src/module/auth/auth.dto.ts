@@ -94,6 +94,10 @@ export class RegisterDTO extends BaseDto {
   @MaxLength(30, { message: 'Password must be at most 30 characters long' })
   @IsNotEmpty({ message: 'Password is required.' })
   password: string
+
+  @IsOptional()
+  @IsString({ message: 'Phone number must be a string.' })
+  phone_number?: string
 }
 
 export class SendOtpDTO extends BaseDto {

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import axiosClient from '~/lib/axios'
 import type { ApiResponse } from '~/types'
 import type { VendorRegistrationFormValues } from '~/schemas/vendor.schema'

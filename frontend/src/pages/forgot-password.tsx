@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowLeft, Loader2, Mail, MailCheck, ShieldCheck, Sparkles } from 'lucide-react'
+import { ArrowLeft, Loader2, Mail, MailCheck, ShieldCheck } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -55,7 +55,6 @@ export default function ForgotPasswordPage() {
 
           <div className='relative z-10 flex w-full flex-col justify-between p-8 text-white xl:p-12'>
             <div className='inline-flex w-fit items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm backdrop-blur-xl'>
-              <Sparkles className='size-4 text-cyan-300' />
               Account recovery
             </div>
 

@@ -1,12 +1,11 @@
 import { useState } from 'react'
-import { CheckCircle2, Eye, EyeOff, Loader2, LockKeyhole, Mail, ShieldCheck, UserRound } from 'lucide-react'
+import { CheckCircle2, Eye, EyeOff, Loader2, LockKeyhole, Mail, ShieldCheck, UserRound, Phone } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
-import { Separator } from '~/components/ui/separator'
 import { useRegister } from '~/hooks/useAuth'
 import { registerSchema, type RegisterFormValues } from '~/schemas/register.schema'
 import { toast } from 'sonner'
@@ -30,6 +29,7 @@ export function RegisterForm() {
     defaultValues: {
       name: '',
       email: '',
+      phone_number: '',
       password: '',
       confirmPassword: '',
       acceptedTerms: false
@@ -54,7 +54,8 @@ export function RegisterForm() {
     const body: RegisterBody = {
       email: data.email.trim(),
       password: data.password,
-      name: data.name.trim()
+      name: data.name.trim(),
+      phone_number: data.phone_number?.trim() || undefined
     }
 
     registerMutation.mutate(body, {
@@ -64,7 +65,7 @@ export function RegisterForm() {
       },
       onError: (err: ApiError) => {
         Object.entries(err.errors ?? {}).forEach(([field, messages]) => {
-          if (field === 'name' || field === 'email' || field === 'password') {
+          if (field === 'name' || field === 'email' || field === 'phone_number' || field === 'password') {
             setError(field, {
               type: 'server',
               message: messages?.[0] ?? err.message
@@ -93,30 +94,6 @@ export function RegisterForm() {
         </div>
       </div>
 
-      <div className='grid grid-cols-3 gap-2 text-xs'>
-        <div className='rounded-xl bg-slate-50 px-3 py-2 text-center font-medium text-slate-700'>Fast checkout</div>
-        <div className='rounded-xl bg-slate-50 px-3 py-2 text-center font-medium text-slate-700'>Order tracking</div>
-        <div className='rounded-xl bg-slate-50 px-3 py-2 text-center font-medium text-slate-700'>Secure access</div>
-      </div>
-
-      <button
-        type='button'
-        disabled
-        className='flex h-11 w-full items-center justify-center gap-3 rounded-lg border text-sm font-medium text-gray-500 opacity-80'
-      >
-        <img src='https://www.svgrepo.com/show/475656/google-color.svg' alt='Google logo' className='h-5 w-5' />
-        <span>Continue with Google</span>
-        <span className='rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide'>
-          Soon
-        </span>
-      </button>
-
-      <div className='flex items-center gap-2'>
-        <Separator className='flex-1' />
-        <span className='text-xs text-gray-400'>or use email</span>
-        <Separator className='flex-1' />
-      </div>
-
       <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
         <div className='space-y-2'>
           <label htmlFor='register-name' className='text-sm font-medium text-gray-700'>
@@ -127,7 +104,7 @@ export function RegisterForm() {
             <Input
               id='register-name'
               {...register('name')}
-              placeholder='John Doe'
+              placeholder='Your name'
               autoComplete='name'
               aria-invalid={Boolean(errors.name)}
               className='h-11 pl-10'
@@ -155,6 +132,24 @@ export function RegisterForm() {
         </div>
 
         <div className='space-y-2'>
+          <label htmlFor='register-phone' className='text-sm font-medium text-gray-700'>
+            Phone number
+          </label>
+          <div className='relative'>
+            <Phone className='absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400' />
+            <Input
+              id='register-phone'
+              {...register('phone_number')}
+              placeholder='+1 (555) 123-4567'
+              autoComplete='tel'
+              aria-invalid={Boolean(errors.phone_number)}
+              className='h-11 pl-10'
+            />
+          </div>
+          {errors.phone_number && <p className='text-xs text-red-500'>{errors.phone_number.message}</p>}
+        </div>
+
+        <div className='space-y-2'>
           <label htmlFor='register-password' className='text-sm font-medium text-gray-700'>
             Password
           </label>
@@ -164,7 +159,7 @@ export function RegisterForm() {
               id='register-password'
               {...register('password')}
               type={showPassword ? 'text' : 'password'}
-              placeholder='Create a password'
+              placeholder='password'
               autoComplete='new-password'
               aria-invalid={Boolean(errors.password)}
               className='h-11 pl-10 pr-10'

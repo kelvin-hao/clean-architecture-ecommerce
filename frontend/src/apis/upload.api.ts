@@ -6,7 +6,7 @@ export const uploadApi = {
     const formData = new FormData()
     formData.append('image', file)
 
-    const res = await axiosClient.post<ApiResponse<{ secure_url: string }>>('/uploads/single-image', formData, {
+    const res = await axiosClient.post<ApiResponse<{ secure_url: string }>>('/upload/image', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }

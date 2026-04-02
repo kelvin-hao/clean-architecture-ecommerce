@@ -79,12 +79,6 @@ export function LoginForm() {
         </div>
       </div>
 
-      <div className='grid grid-cols-3 gap-2 text-xs'>
-        <div className='rounded-xl bg-slate-50 px-3 py-2 text-center font-medium text-slate-700'>Saved carts</div>
-        <div className='rounded-xl bg-slate-50 px-3 py-2 text-center font-medium text-slate-700'>Fast checkout</div>
-        <div className='rounded-xl bg-slate-50 px-3 py-2 text-center font-medium text-slate-700'>Order history</div>
-      </div>
-
       <button
         type='button'
         onClick={handleGoogleLogin}

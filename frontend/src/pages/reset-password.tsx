@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowLeft, CheckCircle2, Eye, EyeOff, Loader2, LockKeyhole, ShieldCheck, Sparkles } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Eye, EyeOff, Loader2, LockKeyhole, ShieldCheck } from 'lucide-react'
 import { useForm, useWatch } from 'react-hook-form'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -96,7 +96,6 @@ export default function ResetPasswordPage() {
 
           <div className='relative z-10 flex w-full flex-col justify-between p-8 text-white xl:p-12'>
             <div className='inline-flex w-fit items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm backdrop-blur-xl'>
-              <Sparkles className='size-4 text-amber-300' />
               Password update
             </div>
 

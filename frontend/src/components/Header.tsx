@@ -9,7 +9,7 @@ type HeaderProps = {
   user?: AuthUser | null
 }
 
-const quickLinks = ['Deals', 'Vendors', 'Categories', 'New arrivals']
+const quickLinks = ['Deals', 'Products', 'Categories', 'New arrivals']
 
 export function Header({ user }: HeaderProps) {
   return (
@@ -24,13 +24,11 @@ export function Header({ user }: HeaderProps) {
                 </div>
 
                 <div>
-                  <p className='text-base font-bold text-slate-900'>VendorVerse</p>
-                  <p className='text-xs text-slate-500'>Multi-vendor marketplace</p>
+                  <p className='text-base font-bold text-slate-900'>Shoppe</p>
                 </div>
               </Link>
 
               <div className='hidden items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 md:inline-flex'>
-                <Sparkles className='size-3.5' />
                 Trusted sellers · Fast delivery
               </div>
             </div>
