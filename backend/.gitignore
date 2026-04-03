@@ -2,6 +2,7 @@ node_modules/
 dist/
 logs/
 .env
+bash/
 
 # Logs
 logs
@@ -14,6 +15,7 @@ lerna-debug.log*
 
 node_modules
 dist
+bash
 dist-ssr
 *.local
 

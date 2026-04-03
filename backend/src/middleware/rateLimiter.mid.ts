@@ -1,8 +1,6 @@
 import { NextFunction, Request, Response } from 'express'
-import Redis from 'ioredis'
-import databaseManager from '~/database/dbManager'
+import { redisProvider } from '~/database'
 import { InternalServerError, TooManyRequest } from '~/helper/response/errorResponse'
-import { ConnectionsEnum } from '~/types/type'
 
 /**
  * Configuration options for the rate limiter middleware.
@@ -24,7 +22,7 @@ export function createRateLimiter(options: RateLimiterOptions) {
   // Return the actual middleware function
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const redisClient = await databaseManager.getConnection<Redis>(ConnectionsEnum.REDIS)
+      const redisClient = await redisProvider()
       const clientIp = req.ip
 
       if (!clientIp) {

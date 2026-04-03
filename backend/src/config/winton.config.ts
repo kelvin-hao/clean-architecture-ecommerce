@@ -1,6 +1,7 @@
-import { createLogger, format, transports, Logger as WinstonLogger } from 'winston'
-import DailyRotateFile from 'winston-daily-rotate-file'
+import { createLogger, format, Logger as WinstonLogger } from 'winston'
+import LokiTransport from 'winston-loki'
 import { getRequestId } from '~/utils/request-context.util'
+import env from './env/dotenv.config'
 
 interface LoggerConfig {
   logLevel?: 'info' | 'warn' | 'error' | 'debug'
@@ -17,22 +18,31 @@ export interface LogData {
 
 class Logger {
   private readonly winstonLogger: WinstonLogger
-  private readonly isProduction = process.env.NODE_ENV === 'production'
+  private readonly isProduction = env.BUILD_MODE === 'production'
 
   constructor(config: LoggerConfig = {}) {
-    const {
-      logLevel = this.isProduction ? 'info' : 'debug',
-      logDirectory = 'logs',
-      serviceName = 'ecommerce-service'
-    } = config
+    const { logLevel = this.isProduction ? 'info' : 'debug', serviceName = 'ecommerce-server' } = config
+
+    const transportsList = [
+      new LokiTransport({
+        host: 'http://localhost:3100',
+        labels: {
+          service: serviceName,
+          env: process.env.NODE_ENV || 'development'
+        },
+        format: format.combine(format.timestamp(), format.json()),
+        onConnectionError: (err) => {
+          console.error('Loki connection error:', err)
+        }
+      })
+    ]
 
     this.winstonLogger = createLogger({
       level: logLevel,
       format: this.buildFormat(serviceName),
-      transports: this.buildTransports(logDirectory),
+      transports: transportsList,
       defaultMeta: {
-        service: serviceName,
-        env: process.env.NODE_ENV || 'development'
+        service: serviceName
       },
       exitOnError: false
     })
@@ -42,6 +52,7 @@ class Logger {
     if (this.isProduction) {
       return format.combine(
         format.timestamp(),
+        format.colorize(),
         format.errors({ stack: true }),
         format((info) => {
           return info
@@ -50,7 +61,6 @@ class Logger {
       )
     }
 
-    // DEV FORMAT (readable)
     return format.combine(
       format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
       format.errors({ stack: true }),
@@ -68,31 +78,6 @@ ${stack ? `stack=${stack}` : ''}
     )
   }
 
-  private buildTransports(logDirectory: string) {
-    const transportList = []
-
-    if (!this.isProduction) {
-      transportList.push(new transports.Console())
-    }
-
-    // File rotation
-    const createDailyRotateFile = (level: 'info' | 'error') =>
-      new DailyRotateFile({
-        level,
-        dirname: logDirectory,
-        filename: `%DATE%.${level}.log`,
-        datePattern: 'YYYY-MM-DD',
-        zippedArchive: true,
-        maxSize: '20m',
-        maxFiles: '14d'
-      })
-
-    transportList.push(createDailyRotateFile('info'))
-    transportList.push(createDailyRotateFile('error'))
-
-    return transportList
-  }
-
   public info(message: string, meta?: LogData): void {
     this.winstonLogger.info(message, meta)
   }
@@ -101,18 +86,15 @@ ${stack ? `stack=${stack}` : ''}
     this.winstonLogger.warn(message, meta)
   }
 
-  public error(message: string, error?: unknown, meta?: LogData): void {
-    let errorMeta = {}
-
-    if (error instanceof Error) {
-      errorMeta = {
-        errorMessage: error.message,
-        errorName: error.name,
-        stack: error.stack
-      }
-    } else {
-      errorMeta = { error }
-    }
+  public error(message: string, error?: unknown, meta: LogData = {}): void {
+    const errorMeta =
+      error instanceof Error
+        ? {
+            errorMessage: error.message,
+            errorName: error.name,
+            stack: error.stack
+          }
+        : { error }
 
     this.winstonLogger.error(message, {
       ...meta,
@@ -122,5 +104,3 @@ ${stack ? `stack=${stack}` : ''}
 }
 
 export const logger = new Logger()
-
-export default Logger

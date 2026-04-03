@@ -87,7 +87,7 @@ const routeConfig = {
       },
 
       logout: {
-        path: '/log-out',
+        path: '/logout',
         method: 'DELETE'
       },
 

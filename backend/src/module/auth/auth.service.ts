@@ -326,14 +326,28 @@ class AuthService {
     const htmlResetPasswordTemplate = EMAIL_TEMPLATE_RESET_PASSWORD
 
     const emailQueue = await QueueManager.getQueue(QueueName.EMAIL)
-    await emailQueue.add(JobType.SEND_EMAIL, {
-      payload: {
-        recipient,
-        message: htmlResetPasswordTemplate,
-        holder,
-        subject
+    await emailQueue.add(
+      JobType.SEND_EMAIL,
+      {
+        payload: {
+          recipient,
+          message: htmlResetPasswordTemplate,
+          holder,
+          subject
+        }
+      },
+      {
+        jobId: `send-reset-password-email:${normalizedEmail}:${resetToken}`, // ensure idempotent job for same email and token
+        attempts: 3, // retry up to 3 times if the job fails
+        backoff: {
+          // use exponential backoff strategy for retries
+          type: 'exponential',
+          delay: 1000 // initial delay of 1 second before the first retry
+        },
+        removeOnComplete: true, // automatically remove job from queue when completed
+        removeOnFail: false // keep failed jobs in the queue for debugging
       }
-    })
+    )
 
     return genericResponse
   }
@@ -440,16 +454,30 @@ class AuthService {
       this.redisClient.set(verificationKey, userData, 'EX', ONE_MINUTES_IN_SECONDS),
       this.redisClient.set(pendingRegistrationKey, userData, 'EX', FIFTEN_MINUTES_IN_SECONDS),
       this.redisClient.set(rateLimitKey, 'true', 'EX', ONE_MINUTES_IN_SECONDS),
-      emailQueue.add(JobType.SEND_EMAIL, {
-        payload: {
-          recipient: normalizedEmail,
-          message: EMAIL_TEMPLATE_TWO_STEP_VERIFICATION,
-          holder: {
-            verification_code: verificationToken
+      emailQueue.add(
+        JobType.SEND_EMAIL,
+        {
+          payload: {
+            recipient: normalizedEmail,
+            message: EMAIL_TEMPLATE_TWO_STEP_VERIFICATION,
+            holder: {
+              verification_code: verificationToken
+            },
+            subject: EMAIL_REGISTRATION_SUBJECT
+          }
+        },
+        {
+          jobId: `send-verification-email:${normalizedEmail}:${verificationToken}`, // ensure idempotent job for same email and token
+          attempts: 3, // retry up to 3 times if the job fails
+          backoff: {
+            // use exponential backoff strategy for retries
+            type: 'exponential',
+            delay: 1000 // initial delay of 1 second before the first retry
           },
-          subject: EMAIL_REGISTRATION_SUBJECT
+          removeOnComplete: true, // automatically remove job from queue when completed
+          removeOnFail: false // keep failed jobs in the queue for debugging
         }
-      })
+      )
     ])
 
     return {

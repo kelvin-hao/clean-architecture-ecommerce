@@ -49,7 +49,7 @@ const expressApp = async (app: Express) => {
       },
       security: [{ bearerAuth: [] }]
     },
-    apis: ['./docs/*.yaml']
+    apis: ['./src/module/**/*.route.ts']
   }
 
   const swaggerSpec = swaggerJsdoc(options)
@@ -98,7 +98,7 @@ export const initialExpressApp = async () => {
   initializeScheduler()
 
   // asynchronous
-  await Promise.allSettled([initializeDatabase(), initializeBackgroundJob(), initialIndices()])
+  await Promise.all([initializeDatabase(), initializeBackgroundJob(), initialIndices()])
 }
 
 export default expressApp

@@ -6,6 +6,7 @@ import expressApp, { initialExpressApp } from './app'
 import databaseManager from './database/dbManager'
 import logRoutesFromConfig from './utils/logEndpoints.util'
 import routeConfig from './config/route.config'
+import { logger } from './config/winton.config'
 
 const bootstrapServer = async () => {
   // something need to run befor server
@@ -18,18 +19,17 @@ const bootstrapServer = async () => {
   logRoutesFromConfig(routeConfig)
   // Gracefully shutting down
   exitAppHook(async (callback) => {
-    console.log('\nGracefully shutting down...')
     await databaseManager.closeAllConnections()
     callback()
   })
 
   app.listen(env.PORT, () => {
-    console.log(`🚀 Server is running on port ${env.PORT}.`)
+    logger.info(`🚀 Server is running on port ${env.PORT}.`)
   })
 }
 
 bootstrapServer().catch((error) => {
-  console.error('FATAL ERROR: Failed to bootstrap the server:')
-  console.error(error)
+  logger.error('FATAL ERROR: Failed to bootstrap the server:')
+  logger.error(error)
   process.exit(1)
 })

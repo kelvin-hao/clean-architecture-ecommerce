@@ -1,5 +1,6 @@
 import { Client } from '@elastic/elasticsearch'
 import env from '~/config/env/dotenv.config'
+import { logger } from '~/config/winton.config'
 import { InternalServerError } from '~/helper/response/errorResponse'
 import { IConnectionStrategy } from '~/types/interface'
 
@@ -26,11 +27,11 @@ export class ElasticsearchConnection implements IConnectionStrategy<Client> {
 
     try {
       await this.client.ping()
-      console.log('Elasticsearch connection status: connected')
+      logger.info('Elasticsearch connection status: connected')
 
       return this.client
     } catch (err: unknown) {
-      console.error('Failed to connect to Elasticsearch:', err)
+      logger.error('Failed to connect to Elasticsearch:', err)
       throw new InternalServerError('Failed to connect to the Elasticsearch engine')
     }
   }
@@ -38,7 +39,7 @@ export class ElasticsearchConnection implements IConnectionStrategy<Client> {
   async disconnect(): Promise<void> {
     if (this.client) {
       await this.client.close()
-      console.log('Elasticsearch disconnected')
+      logger.info('Elasticsearch disconnected')
     }
   }
 }

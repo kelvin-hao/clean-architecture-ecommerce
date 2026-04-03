@@ -2,7 +2,7 @@ import { Container } from 'inversify'
 import UserController from '~/module/user/user.controller'
 import UserModel from '~/module/user/user.model'
 import UserRepository from '~/module/user/user.repository'
-import { redisProvider } from '~/database'
+import { elasticSearchProvider, redisProvider } from '~/database'
 import { ContainerInjectionRegistry } from './injectionManager'
 import UserService from '~/module/user/user.service'
 import UploadService from '~/module/upload/upload.service'
@@ -51,7 +51,7 @@ export function configureContainer(): Container {
 
   container.bind(ContainerInjectionRegistry.RedisDB).toDynamicValue(redisProvider).inSingletonScope()
 
-  // container.bind(ContainerInjectionRegistry.ElasticsearchDB).toDynamicValue(elasticSearchProvider).inSingletonScope()
+  container.bind(ContainerInjectionRegistry.ElasticsearchDB).toDynamicValue(elasticSearchProvider).inSingletonScope()
 
   container.bind(UploadService).toSelf().inSingletonScope()
 
